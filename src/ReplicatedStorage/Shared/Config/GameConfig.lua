@@ -137,6 +137,44 @@ GameConfig.Raid = {
 		ShieldOnJoinSeconds = 30,
 		ShieldAfterTheftSeconds = 20,
 	},
+	Wanted = {
+		StartsAtStreak = 2,
+		BountyPerStreak = 500,
+		MaxBounty = 10_000,
+	},
+	Revenge = {
+		WindowSeconds = 900,
+		PayoutMultiplier = 1.50,
+	},
+	Trap = {
+		MaxLevel = 5,
+		BaseUpgradeCost = 1_000,
+		UpgradeCostGrowth = 2,
+		CooldownSeconds = 20,
+		BaseSlowSeconds = 2.5,
+		SlowPerLevel = 0.5,
+		SlowWalkSpeed = 8,
+	},
+	MegaCore = {
+		IntervalSeconds = 720,
+		WarningSeconds = 20,
+		DurationSeconds = 120,
+		MaxDrains = 40,
+		DrainCooldownSeconds = 4,
+		BaseRewardEnergy = 1_000,
+		WeeklyPointsPerDrain = 2,
+	},
+	Leaderboard = {
+		RefreshSeconds = 30,
+		TopCount = 10,
+	},
+	CoreSkins = {
+		{ Id = "Default", Name = "Neon Blue", Color = Color3.fromRGB(62, 224, 255), Requirement = "Starter" },
+		{ Id = "Solar", Name = "Solar Gold", Color = Color3.fromRGB(255, 176, 48), Requirement = "Core Level 5" },
+		{ Id = "Toxic", Name = "Toxic Green", Color = Color3.fromRGB(95, 255, 94), Requirement = "5 successful raids" },
+		{ Id = "Void", Name = "Void Purple", Color = Color3.fromRGB(125, 74, 255), Requirement = "Core Level 20" },
+		{ Id = "Galaxy", Name = "Galaxy Pink", Color = Color3.fromRGB(255, 75, 190), Requirement = "Core Level 50" },
+	},
 }
 
 GameConfig.Monetization = {
@@ -175,6 +213,14 @@ GameConfig.DefaultProfile = {
 	DailyStreak = 0,
 	LastDailyClaim = 0,
 	PlaytimeSeconds = 0,
+	CoreLevel = 1,
+	CoreCharge = 75,
+	CoreRaidScore = 0,
+	CoreSkin = "Default",
+	UnlockedCoreSkins = { Default = true },
+	TrapLevel = 0,
+	WeeklyRaidScore = 0,
+	WeeklyRaidKey = "",
 	Settings = {
 		Music = true,
 		SFX = true,
@@ -190,12 +236,35 @@ GameConfig.DefaultProfile = {
 		DailyClaims = 0,
 		CodesRedeemed = 0,
 		Purchases = 0,
-			CoreEnergyClaimed = 0,
-			CoreFragmentsStolen = 0,
-			CoreFragmentsLost = 0,
-			RaidDefenses = 0,
+		CoreEnergyClaimed = 0,
+		CoreFragmentsStolen = 0,
+		CoreFragmentsLost = 0,
+		RaidDefenses = 0,
+		MegaCoreDrains = 0,
+		TrapTriggers = 0,
+		RevengeHeists = 0,
+		BountiesClaimed = 0,
 	},
 }
+
+function GameConfig.GetTrapUpgradeCost(level)
+	level = math.max(0, math.floor(tonumber(level) or 0))
+	return math.floor(GameConfig.Raid.Trap.BaseUpgradeCost * (GameConfig.Raid.Trap.UpgradeCostGrowth ^ level))
+end
+
+function GameConfig.GetTrapSlowSeconds(level)
+	level = math.max(1, math.floor(tonumber(level) or 1))
+	return GameConfig.Raid.Trap.BaseSlowSeconds + ((level - 1) * GameConfig.Raid.Trap.SlowPerLevel)
+end
+
+function GameConfig.GetCoreSkin(skinId)
+	for _, skin in ipairs(GameConfig.Raid.CoreSkins) do
+		if skin.Id == skinId then
+			return skin
+		end
+	end
+	return GameConfig.Raid.CoreSkins[1]
+end
 
 function GameConfig.GetCoreRate(level)
 	level = math.max(1, math.floor(tonumber(level) or 1))
