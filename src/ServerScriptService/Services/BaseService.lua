@@ -185,6 +185,7 @@ function BaseService:ClaimCore(player)
 	profile.CoreCharge -= amount
 	profile.Stats.CoreEnergyClaimed += amount
 	Services.EconomyService:AddEnergy(player, amount, "CoreClaim")
+	Services.TutorialService:Mark(player, "ClaimCore")
 	Services.AnalyticsService:Custom(player, "CoreClaimed", amount)
 	self:UpdateCoreVisual(player)
 	Services.NetworkService:Toast(player, "+" .. formatNumber(amount) .. " Energy banked from your Core!", "Energy")
@@ -209,6 +210,7 @@ function BaseService:UpgradeCore(player)
 	end
 
 	profile.CoreLevel += 1
+	Services.TutorialService:Mark(player, "UpgradeCore")
 	Services.SkinService:RefreshUnlocks(player)
 	Services.AchievementService:Evaluate(player)
 	Services.AnalyticsService:Custom(player, "CoreUpgraded", profile.CoreLevel)
