@@ -157,6 +157,8 @@ function NetworkService:Start()
 			Services.BaseService:TeleportHome(player)
 		elseif action == "SetCoreSkin" then
 			Services.SkinService:SetSkin(player, payload)
+		elseif action == "UpgradeTrap" then
+			Services.DefenseService:Upgrade(player)
 		end
 	end)
 end
