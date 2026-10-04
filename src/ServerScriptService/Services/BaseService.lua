@@ -194,6 +194,7 @@ function BaseService:UpgradeCore(player)
 	end
 
 	profile.CoreLevel += 1
+	Services.AchievementService:Evaluate(player)
 	Services.AnalyticsService:Custom(player, "CoreUpgraded", profile.CoreLevel)
 	self:UpdateCoreVisual(player)
 	Services.NetworkService:PushState(player)
@@ -220,7 +221,7 @@ function BaseService:TeleportHome(player)
 	return false
 end
 
-function BaseService:_createBridge(islandPosition)
+function BaseService:_createBridge(parent, islandPosition)
 	local cfg = Services.GameConfig.Raid
 	local hubPosition = cfg.ArenaCenter
 	local direction = hubPosition - islandPosition
@@ -232,7 +233,7 @@ function BaseService:_createBridge(islandPosition)
 	local midpoint = (start + finish) / 2
 
 	local bridge = newPart(
-		arenaFolder,
+		parent,
 		"RaidBridge",
 		Vector3.new(10, 2, bridgeLength),
 		CFrame.lookAt(midpoint, finish),
@@ -396,7 +397,7 @@ function BaseService:_createPlayerBase(player, slot)
 		SpawnPosition = center + Vector3.new(0, 6, 25),
 	}
 
-	self:_createBridge(center)
+	self:_createBridge(model, center)
 	self:UpdateCoreVisual(player)
 
 	Services.RaidService:SetShield(player, cfg.Steal.ShieldOnJoinSeconds)
