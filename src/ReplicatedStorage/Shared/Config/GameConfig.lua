@@ -210,6 +210,7 @@ GameConfig.DefaultProfile = {
 	Achievements = {},
 	CodesRedeemed = {},
 	Entitlements = {},
+	ProcessedReceipts = {},
 	DailyStreak = 0,
 	LastDailyClaim = 0,
 	LastSeen = 0,
