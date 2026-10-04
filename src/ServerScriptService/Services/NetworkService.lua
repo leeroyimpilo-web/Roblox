@@ -9,6 +9,27 @@ local toastEvent
 local actionEvent
 local eventBanner
 
+local function getWorldState(profile)
+	local unlockedCount = 0
+	local nextWorld
+
+	for _, world in ipairs(Services.GameConfig.Worlds) do
+		if profile.UnlockedWorlds[world.Id] then
+			unlockedCount += 1
+		elseif not nextWorld then
+			nextWorld = world
+		end
+	end
+
+	return {
+		UnlockedCount = unlockedCount,
+		Total = #Services.GameConfig.Worlds,
+		NextId = nextWorld and nextWorld.Id or nil,
+		NextName = nextWorld and nextWorld.Name or "All worlds unlocked",
+		NextCost = nextWorld and nextWorld.UnlockCost or 0,
+	}
+end
+
 local function buildState(profile, player)
 	if not profile then
 		return nil
@@ -22,6 +43,7 @@ local function buildState(profile, player)
 		NextPowerCost = Services.GameConfig.GetPowerUpgradeCost(profile.Power),
 		LifetimeEnergy = profile.Stats and profile.Stats.LifetimeEnergy or 0,
 		JungleUnlocked = profile.UnlockedWorlds and profile.UnlockedWorlds.Jungle == true,
+		Worlds = getWorldState(profile),
 		Companions = Services.CompanionService:GetClientState(profile, player),
 		Quests = Services.QuestService:GetClientState(profile),
 		Rebirth = Services.RebirthService:GetClientState(profile),
