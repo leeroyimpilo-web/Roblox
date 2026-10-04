@@ -1,51 +1,57 @@
 # Live Ops and Admin
 
-Admin chat commands work only for numeric Roblox UserIds listed in `GameConfig.AdminUserIds`.
+Admin commands work only for numeric Roblox UserIds listed in `GameConfig.AdminUserIds`.
 
 ## Commands
 
 `/event PowerSurge 300`  
-Starts a Power Surge for 300 seconds.
+Start Power Surge.
 
 `/event LuckyRush 300`  
-Starts Lucky Rush.
+Start Lucky Rush.
 
 `/event MegaCharge 300`  
-Starts Mega Charge.
+Start Mega Charge.
+
+`/event CoreMeltdown 180`  
+Start Core Meltdown.
+
+`/meltdown 180`  
+Shortcut for Core Meltdown.
+
+`/megacore 120`  
+Activate the central Mega Core for 120 seconds.
 
 `/giveenergy 5000`  
-Grants Energy to the admin for testing.
+Grant Energy to the admin for testing.
 
 `/announce Your message here`  
-Displays a server-wide announcement banner.
+Show a server-wide announcement.
 
 `/boss`  
-Immediately respawns the Jungle Titan.
+Respawn Jungle Titan.
 
 `/rebirth`  
-Forces an admin rebirth for testing.
+Force an admin rebirth for testing.
 
-## Promo codes
+## Automatic live systems
 
-Configured launch codes:
-- LAUNCH
-- JUNGLE
-- POWERUP
+Rotating Energy/Core events run from `GameConfig.LiveEvents`.
 
-Codes are case-insensitive and can be redeemed once per player.
+Mega Core runs on its own timer from `GameConfig.Raid.MegaCore`.
 
-## Automatic events
+## Weekly championship
 
-A random event starts on the configured interval:
-- Power Surge — x2 Energy
-- Lucky Rush — x1.5 Energy
-- Mega Charge — x3 Energy
+Successful heists add weekly points.
 
-Change timing and multipliers in `GameConfig.LiveEvents`.
+Mega Core drains also add points.
 
-## Recommended operating rhythm
+OrderedDataStore rankings are refreshed periodically and shown in the raid hub and RANKS UI.
 
-- Weekly: review retention, funnel and economy metrics.
-- Every 1–2 weeks: content or balance update.
-- Major updates: add a new code and limited live event.
-- Never change saved-data field meaning without a migration/reconciliation plan.
+## Suggested operating rhythm
+
+- Weekly: review retention, raid completion, tutorial completion and purchase conversion.
+- Weekly: promote championship standings.
+- Every 1–2 weeks: balance or content update.
+- Major update: add a promo code and themed event.
+- Avoid aggressive monetization changes until retention is healthy.
