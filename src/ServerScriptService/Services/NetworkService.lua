@@ -69,6 +69,8 @@ local function buildState(profile, player)
 		Social = Services.SocialService:GetClientState(player),
 		Party = Services.PartyService:GetClientState(player),
 		Trade = Services.TradeService:GetClientState(player),
+		Core = Services.BaseService:GetClientState(player),
+		Raid = Services.RaidService:GetClientState(player),
 		ServerPlayers = getServerPlayers(player),
 		Event = Services.LiveEventService:GetClientState(),
 		Monetization = Services.MonetizationService:GetClientState(profile),
@@ -146,6 +148,8 @@ function NetworkService:Start()
 			Services.TradeService:Confirm(player)
 		elseif action == "TradeCancel" then
 			Services.TradeService:Cancel(player)
+		elseif action == "GoHome" then
+			Services.BaseService:TeleportHome(player)
 		end
 	end)
 end
