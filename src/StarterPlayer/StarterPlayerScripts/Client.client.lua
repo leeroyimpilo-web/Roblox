@@ -736,9 +736,18 @@ local function render(state)
 	crystalsValue.Text = abbreviate(state.PowerCrystals)
 	petsValue.Text = string.format("%s/%s", state.Companions.EquippedCount, state.Companions.MaxEquipped)
 
-	local eventLine = state.Event.Active
-		and string.format("%s x%.1f", state.Event.Name, state.Event.EnergyMultiplier)
-		or "No live event"
+	local eventLine
+	if state.Event.Active then
+		if (state.Event.CoreMultiplier or 1) > 1 and (state.Event.EnergyMultiplier or 1) <= 1 then
+			eventLine = string.format("%s • Core x%.1f", state.Event.Name, state.Event.CoreMultiplier)
+		elseif (state.Event.CoreMultiplier or 1) > 1 then
+			eventLine = string.format("%s • Energy x%.1f • Core x%.1f", state.Event.Name, state.Event.EnergyMultiplier, state.Event.CoreMultiplier)
+		else
+			eventLine = string.format("%s • Energy x%.1f", state.Event.Name, state.Event.EnergyMultiplier)
+		end
+	else
+		eventLine = "No live event"
+	end
 	local bossLine = state.Boss.Alive
 		and string.format("%s: %s/%s HP", state.Boss.Name, state.Boss.Health, state.Boss.MaxHealth)
 		or "Jungle Titan respawning"
