@@ -154,6 +154,7 @@ function WorldService:_createEnergyNode(parent, index, position, worldId)
 		local petMultiplier = Services.CompanionService:GetMultiplierFromProfile(profile)
 		local crystalMultiplier = 1 + (profile.PowerCrystals * Services.GameConfig.Rebirth.CrystalEnergyBonus)
 		local friendMultiplier = Services.SocialService:GetMultiplier(player)
+		local partyMultiplier = Services.PartyService:GetMultiplier(player)
 		local eventMultiplier = Services.LiveEventService:GetEnergyMultiplier()
 		local paidMultiplier = Services.MonetizationService:GetEnergyMultiplier(player)
 
@@ -164,6 +165,7 @@ function WorldService:_createEnergyNode(parent, index, position, worldId)
 				* petMultiplier
 				* crystalMultiplier
 				* friendMultiplier
+				* partyMultiplier
 				* eventMultiplier
 				* paidMultiplier
 		))
