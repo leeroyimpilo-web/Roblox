@@ -58,6 +58,7 @@ GameConfig.Quests = {
 	{ Id = "collect_10", Title = "Energy Hunter", Description = "Collect 10 Energy nodes", Target = 10, RewardEnergy = 150 },
 	{ Id = "power_3", Title = "Power Up", Description = "Buy 3 Power upgrades", Target = 3, RewardEnergy = 300 },
 	{ Id = "hatch_1", Title = "New Friend", Description = "Hatch your first companion", Target = 1, RewardEnergy = 400 },
+	{ Id = "raid_1", Title = "First Heist", Description = "Steal and bank a Power Core fragment", Target = 1, RewardEnergy = 1_000 },
 }
 
 GameConfig.DailyRewards = {
@@ -77,6 +78,8 @@ GameConfig.Achievements = {
 	{ Id = "jungle", Name = "Explorer", Description = "Unlock Jungle Island", RewardCrystals = 2 },
 	{ Id = "rebirth_1", Name = "Born Again", Description = "Complete your first rebirth", RewardCrystals = 3 },
 	{ Id = "boss_1", Name = "Boss Breaker", Description = "Defeat the Jungle Titan", RewardCrystals = 3 },
+	{ Id = "raid_1", Name = "Core Thief", Description = "Complete your first successful Core raid", RewardCrystals = 2 },
+	{ Id = "core_5", Name = "Reactor Online", Description = "Evolve your Power Core to Level 5", RewardCrystals = 3 },
 }
 
 GameConfig.Codes = {
