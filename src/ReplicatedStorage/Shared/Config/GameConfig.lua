@@ -33,6 +33,7 @@ GameConfig.EnergyNodes = {
 
 GameConfig.Companions = {
 	MaxEquipped = 3,
+	ExtraSlotsWithPass = 2,
 	StarterEgg = {
 		Cost = 250,
 		Pool = {
@@ -50,30 +51,82 @@ GameConfig.Rebirth = {
 	EnergyGrowth = 1.7,
 	PowerRequired = 10,
 	BaseCrystalReward = 1,
+	CrystalEnergyBonus = 0.05,
 }
 
 GameConfig.Quests = {
-	{
-		Id = "collect_10",
-		Title = "Energy Hunter",
-		Description = "Collect 10 Energy nodes",
-		Target = 10,
-		RewardEnergy = 150,
+	{ Id = "collect_10", Title = "Energy Hunter", Description = "Collect 10 Energy nodes", Target = 10, RewardEnergy = 150 },
+	{ Id = "power_3", Title = "Power Up", Description = "Buy 3 Power upgrades", Target = 3, RewardEnergy = 300 },
+	{ Id = "hatch_1", Title = "New Friend", Description = "Hatch your first companion", Target = 1, RewardEnergy = 400 },
+}
+
+GameConfig.DailyRewards = {
+	{ Energy = 250, Crystals = 0 },
+	{ Energy = 500, Crystals = 0 },
+	{ Energy = 1_000, Crystals = 0 },
+	{ Energy = 2_000, Crystals = 0 },
+	{ Energy = 4_000, Crystals = 0 },
+	{ Energy = 7_500, Crystals = 1 },
+	{ Energy = 15_000, Crystals = 2 },
+}
+
+GameConfig.Achievements = {
+	{ Id = "energy_1k", Name = "Charged Up", Description = "Earn 1,000 lifetime Energy", RewardCrystals = 1 },
+	{ Id = "nodes_100", Name = "Collector", Description = "Collect 100 Energy nodes", RewardCrystals = 1 },
+	{ Id = "pets_5", Name = "Pack Leader", Description = "Hatch 5 companions", RewardCrystals = 2 },
+	{ Id = "jungle", Name = "Explorer", Description = "Unlock Jungle Island", RewardCrystals = 2 },
+	{ Id = "rebirth_1", Name = "Born Again", Description = "Complete your first rebirth", RewardCrystals = 3 },
+	{ Id = "boss_1", Name = "Boss Breaker", Description = "Defeat the Jungle Titan", RewardCrystals = 3 },
+}
+
+GameConfig.Codes = {
+	LAUNCH = { Energy = 1_000, Crystals = 0 },
+	JUNGLE = { Energy = 2_500, Crystals = 0 },
+	POWERUP = { Energy = 750, Crystals = 1 },
+}
+
+GameConfig.Social = {
+	FriendBonusPerFriend = 0.05,
+	MaxFriendBonus = 0.25,
+}
+
+GameConfig.LiveEvents = {
+	IntervalSeconds = 600,
+	DurationSeconds = 150,
+	Pool = {
+		{ Id = "PowerSurge", Name = "POWER SURGE", EnergyMultiplier = 2 },
+		{ Id = "LuckyRush", Name = "LUCKY RUSH", EnergyMultiplier = 1.5 },
+		{ Id = "MegaCharge", Name = "MEGA CHARGE", EnergyMultiplier = 3 },
 	},
-	{
-		Id = "power_3",
-		Title = "Power Up",
-		Description = "Buy 3 Power upgrades",
-		Target = 3,
-		RewardEnergy = 300,
+}
+
+GameConfig.Boss = {
+	Name = "Jungle Titan",
+	MaxHealth = 500,
+	RespawnSeconds = 60,
+	AttackCooldown = 0.8,
+	BaseRewardEnergy = 5_000,
+}
+
+GameConfig.Monetization = {
+	-- Replace 0 values after creating the items in Creator Hub.
+	Passes = {
+		VIP = 0,
+		DoubleEnergy = 0,
+		ExtraCompanionSlots = 0,
+		Hoverboard = 0,
 	},
-	{
-		Id = "hatch_1",
-		Title = "New Friend",
-		Description = "Hatch your first companion",
-		Target = 1,
-		RewardEnergy = 400,
+	Products = {
+		Energy5K = 0,
+		Energy50K = 0,
+		ServerBoost = 0,
+		InstantRebirth = 0,
 	},
+	SubscriptionId = "",
+}
+
+GameConfig.AdminUserIds = {
+	-- Add your Roblox numeric UserId here before using admin chat commands.
 }
 
 GameConfig.DefaultProfile = {
@@ -85,9 +138,16 @@ GameConfig.DefaultProfile = {
 	Companions = {},
 	EquippedCompanions = {},
 	Quests = {},
+	Achievements = {},
+	CodesRedeemed = {},
+	Entitlements = {},
 	DailyStreak = 0,
 	LastDailyClaim = 0,
 	PlaytimeSeconds = 0,
+	Settings = {
+		Music = true,
+		SFX = true,
+	},
 	Stats = {
 		LifetimeEnergy = 0,
 		EnergyNodesCollected = 0,
@@ -95,6 +155,10 @@ GameConfig.DefaultProfile = {
 		EggsHatched = 0,
 		WorldsUnlocked = 0,
 		RebirthsCompleted = 0,
+		BossKills = 0,
+		DailyClaims = 0,
+		CodesRedeemed = 0,
+		Purchases = 0,
 	},
 }
 
