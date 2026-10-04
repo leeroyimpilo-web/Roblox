@@ -3,12 +3,14 @@ local UpgradeService = {}
 local DataService
 local EconomyService
 local NetworkService
+local QuestService
 local GameConfig
 
 function UpgradeService:Init(services)
 	DataService = services.DataService
 	EconomyService = services.EconomyService
 	NetworkService = services.NetworkService
+	QuestService = services.QuestService
 	GameConfig = services.GameConfig
 end
 
@@ -32,6 +34,7 @@ function UpgradeService:BuyPowerUpgrade(player)
 
 	profile.Power += 1
 	profile.Stats.PowerUpgradesBought += 1
+	QuestService:Update(player, "power_3", 1)
 	NetworkService:PushState(player)
 	NetworkService:Toast(player, string.format("Power upgraded to %sx!", profile.Power), "Success")
 	return true, profile.Power
