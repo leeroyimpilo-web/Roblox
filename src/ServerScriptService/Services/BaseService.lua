@@ -559,6 +559,7 @@ function BaseService:GetClientState(player)
 		UpgradeCost = profile.CoreLevel < Services.GameConfig.Raid.Core.MaxLevel
 			and Services.GameConfig.GetCoreUpgradeCost(profile.CoreLevel)
 			or 0,
+		RaidScore = profile.CoreRaidScore or 0,
 	}
 end
 
