@@ -48,6 +48,10 @@ function AdminService:_execute(player, message)
 		end
 	elseif command == "/boss" then
 		Services.BossService:ForceRespawn()
+	elseif command == "/megacore" then
+		Services.MegaCoreService:Activate(tonumber(args[2]) or Services.GameConfig.Raid.MegaCore.DurationSeconds)
+	elseif command == "/meltdown" then
+		Services.LiveEventService:Activate("CoreMeltdown", tonumber(args[2]) or 180)
 	elseif command == "/rebirth" then
 		Services.RebirthService:Rebirth(player, true)
 	end
