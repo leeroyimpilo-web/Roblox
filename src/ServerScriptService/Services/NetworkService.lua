@@ -4,6 +4,9 @@ local NetworkService = {}
 
 local DataService
 local GameConfig
+local CompanionService
+local QuestService
+local RebirthService
 local stateChanged
 local toastEvent
 
@@ -19,12 +22,19 @@ local function buildState(profile)
 		Rebirths = profile.Rebirths,
 		NextPowerCost = GameConfig.GetPowerUpgradeCost(profile.Power),
 		LifetimeEnergy = profile.Stats and profile.Stats.LifetimeEnergy or 0,
+		JungleUnlocked = profile.UnlockedWorlds and profile.UnlockedWorlds.Jungle == true,
+		Companions = CompanionService and CompanionService:GetClientState(profile) or nil,
+		Quests = QuestService and QuestService:GetClientState(profile) or {},
+		Rebirth = RebirthService and RebirthService:GetClientState(profile) or nil,
 	}
 end
 
 function NetworkService:Init(services)
 	DataService = services.DataService
 	GameConfig = services.GameConfig
+	CompanionService = services.CompanionService
+	QuestService = services.QuestService
+	RebirthService = services.RebirthService
 end
 
 function NetworkService:Start()
@@ -32,15 +42,15 @@ function NetworkService:Start()
 	remotes.Name = "Remotes"
 	remotes.Parent = ReplicatedStorage
 
-	local getState = Instance.new("RemoteFunction")
+	local getState = remotes:FindFirstChild("GetPlayerState") or Instance.new("RemoteFunction")
 	getState.Name = "GetPlayerState"
 	getState.Parent = remotes
 
-	stateChanged = Instance.new("RemoteEvent")
+	stateChanged = remotes:FindFirstChild("StateChanged") or Instance.new("RemoteEvent")
 	stateChanged.Name = "StateChanged"
 	stateChanged.Parent = remotes
 
-	toastEvent = Instance.new("RemoteEvent")
+	toastEvent = remotes:FindFirstChild("Toast") or Instance.new("RemoteEvent")
 	toastEvent.Name = "Toast"
 	toastEvent.Parent = remotes
 
