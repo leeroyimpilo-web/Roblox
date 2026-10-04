@@ -303,6 +303,8 @@ function RaidService:Deposit(thief)
 	victimProfile.Stats.CoreFragmentsLost += 1
 	thiefProfile.Stats.CoreFragmentsStolen += 1
 	thiefProfile.CoreRaidScore += amount
+	Services.QuestService:Update(thief, "raid_1", 1)
+	Services.AchievementService:Evaluate(thief)
 
 	local payout = math.max(1, math.floor(amount * Services.GameConfig.Raid.Steal.BankMultiplier))
 
