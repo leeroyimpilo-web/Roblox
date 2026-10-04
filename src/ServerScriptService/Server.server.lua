@@ -8,11 +8,25 @@ local Services = {
 	DataService = require(servicesFolder.DataService),
 	NetworkService = require(servicesFolder.NetworkService),
 	EconomyService = require(servicesFolder.EconomyService),
+	QuestService = require(servicesFolder.QuestService),
+	CompanionService = require(servicesFolder.CompanionService),
 	UpgradeService = require(servicesFolder.UpgradeService),
+	RebirthService = require(servicesFolder.RebirthService),
 	WorldService = require(servicesFolder.WorldService),
 }
 
-for _, serviceName in ipairs({ "DataService", "NetworkService", "EconomyService", "UpgradeService", "WorldService" }) do
+local initOrder = {
+	"DataService",
+	"NetworkService",
+	"EconomyService",
+	"QuestService",
+	"CompanionService",
+	"UpgradeService",
+	"RebirthService",
+	"WorldService",
+}
+
+for _, serviceName in ipairs(initOrder) do
 	local service = Services[serviceName]
 	if service.Init then
 		service:Init(Services)
@@ -26,4 +40,4 @@ for _, serviceName in ipairs({ "NetworkService", "DataService", "WorldService" }
 	end
 end
 
-print("[Power Islands] Phase 1 server started")
+print("[Power Islands] Phase 2 server started")
