@@ -4,6 +4,7 @@ local DataService
 local EconomyService
 local NetworkService
 local QuestService
+local AnalyticsService
 local GameConfig
 
 function UpgradeService:Init(services)
@@ -11,6 +12,7 @@ function UpgradeService:Init(services)
 	EconomyService = services.EconomyService
 	NetworkService = services.NetworkService
 	QuestService = services.QuestService
+	AnalyticsService = services.AnalyticsService
 	GameConfig = services.GameConfig
 end
 
@@ -26,7 +28,7 @@ function UpgradeService:BuyPowerUpgrade(player)
 	end
 
 	local cost = GameConfig.GetPowerUpgradeCost(profile.Power)
-	local paid = EconomyService:SpendEnergy(player, cost)
+	local paid = EconomyService:SpendEnergy(player, cost, "PowerUpgrade")
 	if not paid then
 		NetworkService:Toast(player, string.format("You need %s Energy.", cost), "Warning")
 		return false, "Not enough Energy"
@@ -35,6 +37,7 @@ function UpgradeService:BuyPowerUpgrade(player)
 	profile.Power += 1
 	profile.Stats.PowerUpgradesBought += 1
 	QuestService:Update(player, "power_3", 1)
+	AnalyticsService:Custom(player, "PowerUpgrade", 1, tostring(profile.Power))
 	NetworkService:PushState(player)
 	NetworkService:Toast(player, string.format("Power upgraded to %sx!", profile.Power), "Success")
 	return true, profile.Power
