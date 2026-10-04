@@ -255,7 +255,7 @@ function WorldService:_createPortal(parent, fromInfo, toInfo, direction)
 	addBillboard(portal, text, style.Node, 300)
 
 	local prompt = Instance.new("ProximityPrompt")
-	prompt.ActionText = toInfo.UnlockCost > 0 and "Unlock / Travel" or "Travel"
+	prompt.ActionText = unlockCost > 0 and "Unlock / Travel" or "Travel"
 	prompt.ObjectText = toInfo.Name
 	prompt.HoldDuration = 0.35
 	prompt.MaxActivationDistance = 15
@@ -272,9 +272,9 @@ function WorldService:_createPortal(parent, fromInfo, toInfo, direction)
 			return
 		end
 
-		if toInfo.UnlockCost > 0 and not profile.UnlockedWorlds[toInfo.Id] then
-			if not Services.EconomyService:SpendEnergy(player, toInfo.UnlockCost, "Unlock_" .. toInfo.Id) then
-				Services.NetworkService:Toast(player, "You need " .. formatNumber(toInfo.UnlockCost) .. " Energy.", "Warning")
+		if unlockCost > 0 and not profile.UnlockedWorlds[toInfo.Id] then
+			if not Services.EconomyService:SpendEnergy(player, unlockCost, "Unlock_" .. toInfo.Id) then
+				Services.NetworkService:Toast(player, "You need " .. formatNumber(unlockCost) .. " Energy.", "Warning")
 				return
 			end
 
