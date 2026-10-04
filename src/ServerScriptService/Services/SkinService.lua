@@ -85,12 +85,20 @@ function SkinService:GetClientState(player)
 end
 
 function SkinService:Start()
-	Players.PlayerAdded:Connect(function(player)
+	local function refresh(player)
 		task.delay(2, function()
-			self:RefreshUnlocks(player)
-			Services.BaseService:UpdateCoreVisual(player)
+			if player.Parent == Players then
+				self:RefreshUnlocks(player)
+				Services.BaseService:UpdateCoreVisual(player)
+				Services.NetworkService:PushState(player)
+			end
 		end)
-	end)
+	end
+
+	Players.PlayerAdded:Connect(refresh)
+	for _, player in ipairs(Players:GetPlayers()) do
+		refresh(player)
+	end
 end
 
 return SkinService
