@@ -163,7 +163,7 @@ statusText.Parent = status
 local menu = Instance.new("Frame")
 menu.AnchorPoint = Vector2.new(1, 0.5)
 menu.Position = UDim2.new(1, -18, 0.52, 0)
-menu.Size = UDim2.fromOffset(150, 330)
+menu.Size = UDim2.fromOffset(150, 390)
 menu.BackgroundTransparency = 1
 menu.Parent = gui
 
@@ -376,7 +376,7 @@ addMenuButton("Pets", "PETS"):Activated:Connect(function() openPanel("Pets") end
 addMenuButton("Daily", "DAILY"):Activated:Connect(function() openPanel("Daily") end)
 addMenuButton("Shop", "SHOP"):Activated:Connect(function() openPanel("Shop") end)
 addMenuButton("Codes", "CODES"):Activated:Connect(function() openPanel("Codes") end)
-addMenuButton("Achievements", "AWARDS"):Activated:Connect(function() openPanel("Achievements") end)
+addMenuButton("Achievements", "AWARDS"):Activated:Connect(function() openPanel("Achievements") end)\naddMenuButton("Social", "SOCIAL"):Activated:Connect(function() openPanel("Social") end)
 
 renderPanel = function(name)
 	if not currentState then
@@ -452,6 +452,17 @@ renderPanel = function(name)
 				actionEvent:FireServer("PromptProduct", productName)
 			end)
 		end
+		if currentState.Monetization.SubscriptionConfigured then
+			addButton(
+				currentState.Monetization.SubscriptionOwned and "VIP CLUB SUBSCRIPTION • ACTIVE" or "VIP CLUB SUBSCRIPTION • +10% ENERGY",
+				function()
+					actionEvent:FireServer("PromptSubscription")
+				end,
+				Color3.fromRGB(116, 76, 136)
+			)
+		else
+			addText("VIP Club subscription • SET SUBSCRIPTION ID", Color3.fromRGB(180, 160, 196))
+		end
 	elseif name == "Codes" then
 		modalTitle.Text = "PROMO CODES"
 		addText("Enter an official Power Islands code.")
@@ -475,6 +486,78 @@ renderPanel = function(name)
 		end, Color3.fromRGB(54, 112, 153))
 
 		addText("Launch codes: LAUNCH • JUNGLE • POWERUP", Color3.fromRGB(126, 255, 164))
+	elseif name == "Social" then
+		modalTitle.Text = "SOCIAL HUB"
+		local party = currentState.Party
+		local trade = currentState.Trade
+
+		if party.PendingInviteFrom then
+			addText("Party invite from " .. party.PendingInviteFrom.Name, Color3.fromRGB(219, 162, 255))
+			addButton("ACCEPT PARTY INVITE", function()
+				actionEvent:FireServer("PartyAccept")
+			end, Color3.fromRGB(47, 116, 78))
+		end
+
+		if party.InParty then
+			addText(string.format("Party boost x%.2f • %s members", party.Multiplier, #party.Members), Color3.fromRGB(126, 255, 164))
+			for _, member in ipairs(party.Members) do
+				if member.UserId ~= player.UserId then
+					addButton("GIFT 100 ENERGY TO " .. member.Name, function()
+						actionEvent:FireServer("GiftEnergy", { UserId = member.UserId, Amount = 100 })
+					end, Color3.fromRGB(54, 112, 153))
+				end
+			end
+			addButton("LEAVE PARTY", function()
+				actionEvent:FireServer("PartyLeave")
+			end, Color3.fromRGB(110, 57, 63))
+		else
+			addText("Create a party for up to +20% Energy from co-play.")
+		end
+
+		if trade.PendingFrom then
+			addText("Trade request from " .. trade.PendingFrom.Name, Color3.fromRGB(255, 213, 111))
+			addButton("ACCEPT TRADE", function()
+				actionEvent:FireServer("TradeAccept")
+			end, Color3.fromRGB(47, 116, 78))
+		end
+
+		if trade.Active then
+			addText("Trading with " .. trade.OtherName, Color3.fromRGB(255, 213, 111))
+			addText("Your offer: " .. (trade.YourOffer and trade.YourOffer.Name or "None"))
+			addText("Their offer: " .. (trade.TheirOffer and trade.TheirOffer.Name or "None"))
+			for _, pet in ipairs(currentState.Companions.Owned) do
+				local uid = pet.Uid
+				addButton("OFFER " .. pet.Name .. " [" .. pet.Rarity .. "]", function()
+					actionEvent:FireServer("TradeOffer", uid)
+				end)
+			end
+			addButton(
+				trade.YourConfirmed and "WAITING FOR OTHER PLAYER..." or "CONFIRM TRADE",
+				function()
+					if not trade.YourConfirmed then
+						actionEvent:FireServer("TradeConfirm")
+					end
+				end,
+				Color3.fromRGB(47, 116, 78)
+			)
+			addButton("CANCEL TRADE", function()
+				actionEvent:FireServer("TradeCancel")
+			end, Color3.fromRGB(110, 57, 63))
+		else
+			addText("Players in this server", Color3.fromRGB(95, 224, 255))
+			if #currentState.ServerPlayers == 0 then
+				addText("No other players are in this server yet.")
+			end
+			for _, other in ipairs(currentState.ServerPlayers) do
+				local userId = other.UserId
+				addButton("PARTY INVITE • " .. other.Name, function()
+					actionEvent:FireServer("PartyInvite", userId)
+				end, Color3.fromRGB(47, 91, 78))
+				addButton("TRADE REQUEST • " .. other.Name, function()
+					actionEvent:FireServer("TradeRequest", userId)
+				end, Color3.fromRGB(83, 55, 116))
+			end
+		end
 	elseif name == "Achievements" then
 		modalTitle.Text = "ACHIEVEMENTS"
 		for _, achievement in ipairs(currentState.Achievements) do
@@ -586,11 +669,13 @@ local function render(state)
 		or "Jungle Titan respawning"
 	local worldLine = string.format("Worlds: %s/%s", state.Worlds.UnlockedCount, state.Worlds.Total)
 	local socialLine = string.format("Friends: %s • x%.2f bonus", state.Social.FriendsInServer, state.Social.Multiplier)
+	local partyLine = string.format("Party boost x%.2f", state.Party.Multiplier)
 	local boostLine = string.format("Pet boost x%.2f • Crystal x%.2f", state.Companions.Multiplier, state.Rebirth.CrystalMultiplier)
 
 	statusText.Text = table.concat({
 		worldLine,
 		socialLine,
+		partyLine,
 		boostLine,
 		eventLine,
 		bossLine,
