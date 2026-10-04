@@ -6,24 +6,44 @@ local GameConfig = require(ReplicatedStorage.Shared.Config.GameConfig)
 local Services = {
 	GameConfig = GameConfig,
 	DataService = require(servicesFolder.DataService),
+	SecurityService = require(servicesFolder.SecurityService),
+	AnalyticsService = require(servicesFolder.AnalyticsService),
 	NetworkService = require(servicesFolder.NetworkService),
 	EconomyService = require(servicesFolder.EconomyService),
+	AchievementService = require(servicesFolder.AchievementService),
 	QuestService = require(servicesFolder.QuestService),
+	SocialService = require(servicesFolder.SocialService),
+	LiveEventService = require(servicesFolder.LiveEventService),
+	MonetizationService = require(servicesFolder.MonetizationService),
 	CompanionService = require(servicesFolder.CompanionService),
 	UpgradeService = require(servicesFolder.UpgradeService),
+	DailyRewardService = require(servicesFolder.DailyRewardService),
+	CodeService = require(servicesFolder.CodeService),
 	RebirthService = require(servicesFolder.RebirthService),
 	WorldService = require(servicesFolder.WorldService),
+	BossService = require(servicesFolder.BossService),
+	AdminService = require(servicesFolder.AdminService),
 }
 
 local initOrder = {
 	"DataService",
+	"SecurityService",
+	"AnalyticsService",
 	"NetworkService",
 	"EconomyService",
+	"AchievementService",
 	"QuestService",
+	"SocialService",
+	"LiveEventService",
+	"MonetizationService",
 	"CompanionService",
 	"UpgradeService",
+	"DailyRewardService",
+	"CodeService",
 	"RebirthService",
 	"WorldService",
+	"BossService",
+	"AdminService",
 }
 
 for _, serviceName in ipairs(initOrder) do
@@ -33,11 +53,22 @@ for _, serviceName in ipairs(initOrder) do
 	end
 end
 
-for _, serviceName in ipairs({ "NetworkService", "DataService", "WorldService" }) do
+local startOrder = {
+	"NetworkService",
+	"DataService",
+	"SocialService",
+	"MonetizationService",
+	"WorldService",
+	"BossService",
+	"LiveEventService",
+	"AdminService",
+}
+
+for _, serviceName in ipairs(startOrder) do
 	local service = Services[serviceName]
 	if service.Start then
 		service:Start()
 	end
 end
 
-print("[Power Islands] Phase 2 server started")
+print("[Power Islands] Full systems build started")
