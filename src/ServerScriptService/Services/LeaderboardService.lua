@@ -10,6 +10,8 @@ local currentWeekKey
 local weeklyTop = {}
 local globalTop = {}
 local nameCache = {}
+local weeklyBoardLabel
+local serverBoardLabel
 
 local function getWeekKey()
 	return os.date("!%Y-%W", os.time())
@@ -113,6 +115,79 @@ function LeaderboardService:_refreshStore(store)
 	return normalizePage(page)
 end
 
+local function formatRows(title, rows, scoreLabel)
+	local lines = { title }
+	if #rows == 0 then
+		table.insert(lines, "Waiting for scores...")
+	else
+		for index, row in ipairs(rows) do
+			table.insert(lines, string.format(
+				"%s. %s  •  %s %s",
+				index,
+				row.Name,
+				math.floor(row.Score or 0),
+				scoreLabel or "PTS"
+			))
+		end
+	end
+	return table.concat(lines, "\n")
+end
+
+function LeaderboardService:_createBoards()
+	local arena = workspace:WaitForChild("CoreRaidArena", 15)
+	if not arena then
+		return
+	end
+
+	local function board(name, offset, title)
+		local part = Instance.new("Part")
+		part.Name = name
+		part.Size = Vector3.new(28, 18, 1)
+		part.CFrame = CFrame.new(Services.GameConfig.Raid.ArenaCenter + offset)
+		part.Anchored = true
+		part.Material = Enum.Material.Metal
+		part.Color = Color3.fromRGB(24, 30, 46)
+		part.Parent = arena
+
+		local gui = Instance.new("SurfaceGui")
+		gui.Face = Enum.NormalId.Front
+		gui.Parent = part
+
+		local label = Instance.new("TextLabel")
+		label.Size = UDim2.fromScale(1, 1)
+		label.BackgroundColor3 = Color3.fromRGB(18, 23, 38)
+		label.Text = title
+		label.TextWrapped = true
+		label.TextScaled = false
+		label.TextSize = 20
+		label.Font = Enum.Font.GothamBold
+		label.TextColor3 = Color3.new(1, 1, 1)
+		label.TextYAlignment = Enum.TextYAlignment.Top
+		label.Parent = gui
+		return label
+	end
+
+	weeklyBoardLabel = board(
+		"WeeklyRaidBoard",
+		Vector3.new(-34, 11, 35),
+		"WEEKLY RAID CHAMPIONSHIP"
+	)
+	serverBoardLabel = board(
+		"ServerRaidBoard",
+		Vector3.new(34, 11, 35),
+		"SERVER RAID LEADERS"
+	)
+end
+
+function LeaderboardService:_updateBoards()
+	if weeklyBoardLabel then
+		weeklyBoardLabel.Text = formatRows("WEEKLY RAID CHAMPIONSHIP", weeklyTop, "PTS")
+	end
+	if serverBoardLabel then
+		serverBoardLabel.Text = formatRows("SERVER RAID LEADERS", self:GetServerTop(), "RAID")
+	end
+end
+
 function LeaderboardService:Refresh()
 	local weekly = self:_refreshStore(weeklyStore)
 	if weekly then
@@ -123,6 +198,8 @@ function LeaderboardService:Refresh()
 	if global then
 		globalTop = global
 	end
+
+	self:_updateBoards()
 
 	if Services.NetworkService then
 		Services.NetworkService:PushAll()
@@ -207,6 +284,9 @@ function LeaderboardService:GetClientState(player)
 end
 
 function LeaderboardService:Start()
+	self:_createBoards()
+	self:_updateBoards()
+
 	task.spawn(function()
 		task.wait(5)
 		while true do
