@@ -17,6 +17,8 @@ local currentPanel
 local followerParts = {}
 local followerSignature = ""
 local hoverboard
+local revengeHighlight
+local revengeBillboard
 
 local successSound = Instance.new("Sound")
 successSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
@@ -175,7 +177,7 @@ statusText.Parent = status
 local menu = Instance.new("Frame")
 menu.AnchorPoint = Vector2.new(1, 0.5)
 menu.Position = UDim2.new(1, -18, 0.52, 0)
-menu.Size = UDim2.fromOffset(150, 455)
+menu.Size = UDim2.fromOffset(150, 520)
 menu.BackgroundTransparency = 1
 menu.Parent = gui
 
@@ -392,6 +394,7 @@ addMenuButton("Shop", "SHOP"):Activated:Connect(function() openPanel("Shop") end
 addMenuButton("Codes", "CODES"):Activated:Connect(function() openPanel("Codes") end)
 addMenuButton("Achievements", "AWARDS"):Activated:Connect(function() openPanel("Achievements") end)
 addMenuButton("Social", "SOCIAL"):Activated:Connect(function() openPanel("Social") end)
+addMenuButton("Ranks", "RANKS"):Activated:Connect(function() openPanel("Ranks") end)
 
 renderPanel = function(name)
 	if not currentState then
@@ -403,6 +406,9 @@ renderPanel = function(name)
 		modalTitle.Text = "POWER CORE"
 		local core = currentState.Core
 		local raid = currentState.Raid
+		local defense = currentState.Defense
+		local skins = currentState.Skins
+		local mega = currentState.MegaCore
 		if not core then
 			addText("Your personal Core island is loading...")
 			return
@@ -416,6 +422,38 @@ renderPanel = function(name)
 			addText("Your Core is fully evolved.", Color3.fromRGB(126, 255, 164))
 		end
 		addText("Raid score: " .. abbreviate(core.RaidScore or 0))
+		if defense then
+			addText(
+				string.format(
+					"Pulse Trap: Level %s/%s%s",
+					defense.TrapLevel,
+					defense.MaxTrapLevel,
+					defense.TrapUpgradeCost > 0 and (" • Next " .. abbreviate(defense.TrapUpgradeCost) .. " Energy") or " • MAX"
+				),
+				Color3.fromRGB(255, 122, 122)
+			)
+		end
+		if raid.IsWanted then
+			addText(
+				string.format("WANTED x%s • Bounty: %s Energy", raid.WantedStreak, abbreviate(raid.Bounty)),
+				Color3.fromRGB(255, 213, 111)
+			)
+		elseif raid.WantedStreak > 0 then
+			addText("Raid streak: " .. raid.WantedStreak)
+		end
+		if raid.Revenge then
+			local left = math.max(0, raid.Revenge.EndsAt - os.time())
+			addText(
+				string.format("REVENGE: %s • x%.2f payout • %ss left", raid.Revenge.TargetName, raid.Revenge.PayoutMultiplier, left),
+				Color3.fromRGB(255, 112, 203)
+			)
+		end
+		if mega and mega.Active then
+			addText(
+				string.format("MEGA CORE ACTIVE • %s/%s drains left", mega.RemainingDrains, mega.MaxDrains),
+				Color3.fromRGB(255, 112, 203)
+			)
+		end
 		if raid.Carrying then
 			addText(
 				string.format("CARRYING STOLEN CORE: %s Charge from %s", abbreviate(raid.Amount), raid.VictimName or "another player"),
@@ -427,6 +465,21 @@ renderPanel = function(name)
 		if raid.Shielded then
 			local remaining = math.max(0, raid.ShieldEndsAt - os.time())
 			addText(string.format("Core shield active: %ss", remaining), Color3.fromRGB(111, 194, 255))
+		end
+		if skins then
+			addText("CORE SKINS", Color3.fromRGB(219, 162, 255))
+			for _, skin in ipairs(skins.Skins or {}) do
+				local skinId = skin.Id
+				local text = (skin.Equipped and "[EQUIPPED] " or "") .. skin.Name
+				if not skin.Unlocked then
+					text ..= " • LOCKED: " .. skin.Requirement
+				end
+				addButton(text, function()
+					if skin.Unlocked then
+						actionEvent:FireServer("SetCoreSkin", skinId)
+					end
+				end, skin.Equipped and Color3.fromRGB(83, 55, 116) or Color3.fromRGB(48, 66, 99))
+			end
 		end
 		addButton("RETURN TO MY ISLAND", function()
 			actionEvent:FireServer("GoHome")
@@ -605,6 +658,32 @@ renderPanel = function(name)
 				end, Color3.fromRGB(83, 55, 116))
 			end
 		end
+	elseif name == "Ranks" then
+		modalTitle.Text = "RAID RANKINGS"
+		local ranks = currentState.Leaderboards
+		addText("WEEKLY CHAMPIONSHIP • " .. tostring(ranks.WeekKey), Color3.fromRGB(255, 213, 111))
+		addText("Your weekly points: " .. abbreviate(ranks.YourWeeklyScore or 0), Color3.fromRGB(126, 255, 164))
+		if #ranks.Weekly == 0 then
+			addText("Weekly global rankings will populate after published DataStore scores are available.")
+		else
+			for _, row in ipairs(ranks.Weekly) do
+				addText(string.format("#%s %s • %s pts", row.Rank, row.Name, abbreviate(row.Score)))
+			end
+		end
+		addText("SERVER RAID LEADERS", Color3.fromRGB(95, 224, 255))
+		for _, row in ipairs(ranks.Server) do
+			addText(string.format("#%s %s • %s raid score", row.Rank, row.Name, abbreviate(row.Score)))
+		end
+		addText("RICHEST CORES IN SERVER", Color3.fromRGB(255, 112, 203))
+		for _, row in ipairs(ranks.RichestCores) do
+			addText(string.format("#%s %s • Core L%s • %s Charge", row.Rank, row.Name, row.CoreLevel, abbreviate(row.Charge)))
+		end
+		if #ranks.Global > 0 then
+			addText("ALL-TIME GLOBAL RAIDERS", Color3.fromRGB(219, 162, 255))
+			for _, row in ipairs(ranks.Global) do
+				addText(string.format("#%s %s • %s raid score", row.Rank, row.Name, abbreviate(row.Score)))
+			end
+		end
 	elseif name == "Achievements" then
 		modalTitle.Text = "ACHIEVEMENTS"
 		for _, achievement in ipairs(currentState.Achievements) do
@@ -701,6 +780,60 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
+local function clearRevengeMarker()
+	if revengeHighlight then
+		revengeHighlight:Destroy()
+		revengeHighlight = nil
+	end
+	if revengeBillboard then
+		revengeBillboard:Destroy()
+		revengeBillboard = nil
+	end
+end
+
+local function updateRevengeMarker(revenge)
+	clearRevengeMarker()
+	if not revenge then
+		return
+	end
+
+	local target = Players:GetPlayerByUserId(revenge.TargetUserId)
+	local character = target and target.Character
+	local root = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Head"))
+	if not character or not root then
+		return
+	end
+
+	revengeHighlight = Instance.new("Highlight")
+	revengeHighlight.Name = "LocalRevengeHighlight"
+	revengeHighlight.FillColor = Color3.fromRGB(255, 63, 165)
+	revengeHighlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+	revengeHighlight.FillTransparency = 0.75
+	revengeHighlight.Parent = character
+
+	revengeBillboard = Instance.new("BillboardGui")
+	revengeBillboard.Name = "LocalRevengeBillboard"
+	revengeBillboard.Size = UDim2.fromOffset(230, 56)
+	revengeBillboard.StudsOffset = Vector3.new(0, 5.5, 0)
+	revengeBillboard.AlwaysOnTop = true
+	revengeBillboard.Parent = root
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundColor3 = Color3.fromRGB(74, 17, 55)
+	label.BackgroundTransparency = 0.1
+	label.Text = "REVENGE TARGET\n" .. target.DisplayName
+	label.TextScaled = true
+	label.TextWrapped = true
+	label.Font = Enum.Font.GothamBlack
+	label.TextColor3 = Color3.fromRGB(255, 175, 224)
+	label.Parent = revengeBillboard
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 10)
+	corner.Parent = label
+end
+
 local function updateHoverboard(state)
 	local owned = state.Monetization
 		and state.Monetization.Passes
@@ -730,6 +863,7 @@ local function render(state)
 	end
 	currentState = state
 	updateHoverboard(state)
+	updateRevengeMarker(state.Raid and state.Raid.Revenge or nil)
 
 	energyValue.Text = abbreviate(state.Energy)
 	powerValue.Text = "x" .. abbreviate(state.Power)
@@ -758,9 +892,16 @@ local function render(state)
 		abbreviate(state.Core.Charge),
 		abbreviate(state.Core.Capacity)
 	) or "Core loading..."
-	local raidLine = state.Raid.Carrying
-		and string.format("ESCAPE: %s stolen Charge", abbreviate(state.Raid.Amount))
-		or (state.Raid.Shielded and "Core shield ACTIVE" or "Core vulnerable to raids")
+	local raidLine
+	if state.Raid.Carrying then
+		raidLine = string.format("ESCAPE: %s stolen Charge", abbreviate(state.Raid.Amount))
+	elseif state.Raid.IsWanted then
+		raidLine = string.format("WANTED x%s • %s bounty", state.Raid.WantedStreak, abbreviate(state.Raid.Bounty))
+	elseif state.Raid.Revenge then
+		raidLine = "REVENGE TARGET: " .. state.Raid.Revenge.TargetName
+	else
+		raidLine = state.Raid.Shielded and "Core shield ACTIVE" or "Core vulnerable to raids"
+	end
 	local worldLine = string.format("Worlds: %s/%s", state.Worlds.UnlockedCount, state.Worlds.Total)
 	local socialLine = string.format("Friends: %s • x%.2f bonus", state.Social.FriendsInServer, state.Social.Multiplier)
 	local partyLine = string.format("Party boost x%.2f", state.Party.Multiplier)
