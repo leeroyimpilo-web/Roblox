@@ -41,10 +41,13 @@ function RaidService:IsShielded(player)
 end
 
 function RaidService:_getWanted(player)
-	wanted[player.UserId] = wanted[player.UserId] or {
-		Streak = 0,
-		Bounty = 0,
-	}
+	if not wanted[player.UserId] then
+		local profile = Services.DataService:GetProfile(player)
+		wanted[player.UserId] = {
+			Streak = profile and (profile.WantedStreak or 0) or 0,
+			Bounty = profile and (profile.WantedBounty or 0) or 0,
+		}
+	end
 	return wanted[player.UserId]
 end
 
@@ -127,6 +130,11 @@ function RaidService:_recordSuccessfulHeist(thief)
 		Services.GameConfig.Raid.Wanted.MaxBounty,
 		state.Streak * Services.GameConfig.Raid.Wanted.BountyPerStreak
 	)
+	local profile = Services.DataService:GetProfile(thief)
+	if profile then
+		profile.WantedStreak = state.Streak
+		profile.WantedBounty = state.Bounty
+	end
 	self:_updateWantedVisual(thief)
 	return state
 end
@@ -136,6 +144,11 @@ function RaidService:_resetWanted(player)
 		Streak = 0,
 		Bounty = 0,
 	}
+	local profile = Services.DataService:GetProfile(player)
+	if profile then
+		profile.WantedStreak = 0
+		profile.WantedBounty = 0
+	end
 	self:_updateWantedVisual(player)
 	Services.NetworkService:PushState(player)
 end
