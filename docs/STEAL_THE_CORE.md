@@ -1,60 +1,117 @@
-# Steal the Core
+# Steal the Core — Final Gameplay Design
 
 ## Product hook
 
-Every player owns a floating island with a Power Core that visibly grows in value. Other players can steal only a controlled portion of its current Charge. The thief must physically escape back to their island while carrying a highly visible fragment.
+Every player owns a floating island with a visible Power Core. The Core produces Charge while the player is online and generates a capped amount while they are away.
 
-The design goal is to create repeatable social stories:
-- theft
-- chase
-- recovery
-- revenge
-- rich-island envy
-- server-wide events
+Players can safely claim their own Charge, evolve the Core, or raid somebody else.
 
-## Core progression
+## The heist
 
-Evolution names:
-- Level 1+: Spark Core
-- Level 5+: Reactor Core
-- Level 10+: Plasma Core
-- Level 20+: Dragon Core
-- Level 35+: Black Hole Core
-- Level 50: Galaxy Core
+A thief crosses the raid bridges and holds **STEAL FRAGMENT** on another player's Core.
 
-Core level increases generation rate and storage capacity.
+The stolen fragment becomes visibly attached to the thief.
 
-Players safely convert their own Core Charge to Energy using the Claim prompt. Evolving a Core costs Energy.
+The victim receives an alert and can chase the thief. If the victim gets close enough, they can use **RECOVER CORE** on the carried fragment.
 
-## Raid rules
+If the thief reaches their green **BANK** pad first, the theft becomes permanent and pays bonus Energy.
 
-- New/respawned players receive temporary shield protection.
+## Protection
+
+- New/respawned players receive a temporary Core shield.
+- Only part of a Core's current Charge is stealable.
+- There is a per-thief/per-target cooldown.
 - A thief can carry only one fragment.
-- A Core must have enough unreserved Charge before it can be robbed.
-- A theft reserves Charge rather than permanently removing it immediately.
-- The victim can chase and use RECOVER CORE on the carried fragment.
-- The actual victim loss happens only when the thief successfully banks the fragment.
-- Each thief has a cooldown before repeatedly targeting the same player.
-- Return-home teleporting is disabled while carrying stolen loot.
-- Leaving/dying cancels an unfinished raid rather than granting free loot.
+- Return-home teleport is blocked while carrying loot.
+- Death/leaving cancels unfinished thefts.
+- Victim loss occurs only after the thief successfully banks.
+- Pulse Traps slow intruders but do no damage.
 
-## Economy
+## Revenge
 
-A successful bank pays more Energy than the raw Charge removed from the victim. This makes raiding exciting while keeping victim loss controlled.
+After a successful heist, the victim receives a temporary revenge target against the thief.
 
-Balance values live under `GameConfig.Raid`.
+A successful revenge heist pays a multiplier and clears the target.
+
+The revenge target is highlighted locally for the player who owns the revenge contract.
+
+## WANTED system
+
+Successful heists build a raid streak.
+
+At the configured threshold the player becomes **WANTED**.
+
+Wanted players receive a visible world marker and an Energy bounty. Their streak/bounty persists across reconnects.
+
+If a defender catches a WANTED thief while recovering their own fragment, the defender earns the bounty and the thief's WANTED streak resets.
+
+## Power Core evolution
+
+- Spark Core
+- Reactor Core
+- Plasma Core
+- Dragon Core
+- Black Hole Core
+- Galaxy Core
+
+Higher levels increase generation rate and capacity.
+
+## Cosmetic Core skins
+
+Deterministic unlocks:
+- Neon Blue — starter
+- Solar Gold — Core Level 5
+- Toxic Green — 5 successful raids
+- Void Purple — Core Level 20
+- Galaxy Pink — Core Level 50
+
+Skins are cosmetic only.
+
+## Pulse Trap
+
+Each personal island contains an upgradeable Pulse Trap.
+
+It is a non-damaging defense that slows intruders temporarily. Higher levels increase the slow duration. It has a server cooldown so it cannot repeatedly trap somebody every physics frame.
+
+## Leaderboards
+
+The game tracks:
+- server raid leaders
+- richest Cores in the current server
+- all-time global raid score
+- weekly raid championship score
+
+Successful heists and Mega Core drains add championship points.
+
+## Mega Core
+
+A giant central Mega Core becomes active on a timer.
+
+Players race to the hub and drain it for:
+- Energy
+- weekly championship points
+
+The player with the most drains during that Mega Core event receives an extra Energy prize.
 
 ## Core Meltdown
 
-CORE MELTDOWN is a rotating live event that multiplies Power Core generation. The intention is to create a short server-wide window where every island becomes more valuable at once.
+CORE MELTDOWN temporarily multiplies personal Core generation, creating a short server-wide period where all islands become richer raid targets.
 
-## Next viral layer
+## First-session tutorial
 
-After the first multiplayer play-test is stable:
-- central timed Mega Core event
-- island traps and non-damaging defenses
-- revenge target marker
-- raid streaks / wanted status
-- cosmetic Core skins
-- server richest-Core leaderboard
-- weekly raid championship
+New players are guided through:
+1. Claim their Core
+2. Evolve the Core
+3. Steal a fragment
+4. Escape and bank it
+
+Tutorial progress is server-verified and logged through onboarding analytics.
+
+## Saving and security
+
+- session-locked player saves
+- capped offline Core generation
+- server-authoritative rewards
+- rate-limited remote actions
+- validated distances and ownership
+- receipt idempotency for Developer Products
