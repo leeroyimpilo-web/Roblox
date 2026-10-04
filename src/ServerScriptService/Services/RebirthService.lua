@@ -3,11 +3,15 @@ local RebirthService = {}
 local DataService
 local NetworkService
 local GameConfig
+local AchievementService
+local AnalyticsService
 
 function RebirthService:Init(services)
 	DataService = services.DataService
 	NetworkService = services.NetworkService
 	GameConfig = services.GameConfig
+	AchievementService = services.AchievementService
+	AnalyticsService = services.AnalyticsService
 end
 
 function RebirthService:GetClientState(profile)
@@ -17,17 +21,18 @@ function RebirthService:GetClientState(profile)
 		RequiredPower = GameConfig.Rebirth.PowerRequired,
 		RewardCrystals = GameConfig.GetRebirthCrystalReward(profile.Rebirths),
 		CanRebirth = profile.Energy >= requiredEnergy and profile.Power >= GameConfig.Rebirth.PowerRequired,
+		CrystalMultiplier = 1 + (profile.PowerCrystals * GameConfig.Rebirth.CrystalEnergyBonus),
 	}
 end
 
-function RebirthService:Rebirth(player)
+function RebirthService:Rebirth(player, bypass)
 	local profile = DataService:GetProfile(player)
 	if not profile then
 		return false
 	end
 
 	local state = self:GetClientState(profile)
-	if not state.CanRebirth then
+	if not bypass and not state.CanRebirth then
 		NetworkService:Toast(
 			player,
 			string.format("Rebirth needs %s Energy and Power %s.", state.RequiredEnergy, state.RequiredPower),
@@ -43,6 +48,8 @@ function RebirthService:Rebirth(player)
 	profile.UnlockedWorlds = { Starter = true }
 	profile.Stats.RebirthsCompleted += 1
 
+	AchievementService:Evaluate(player)
+	AnalyticsService:Custom(player, "RebirthCompleted", 1, tostring(profile.Rebirths))
 	NetworkService:PushState(player)
 	NetworkService:Toast(
 		player,
