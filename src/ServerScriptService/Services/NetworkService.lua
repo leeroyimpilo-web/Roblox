@@ -1,16 +1,15 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 
 local NetworkService = {}
 
-local DataService
-local GameConfig
-local CompanionService
-local QuestService
-local RebirthService
+local Services
 local stateChanged
 local toastEvent
+local actionEvent
+local eventBanner
 
-local function buildState(profile)
+local function buildState(profile, player)
 	if not profile then
 		return nil
 	end
@@ -20,21 +19,23 @@ local function buildState(profile)
 		PowerCrystals = profile.PowerCrystals,
 		Power = profile.Power,
 		Rebirths = profile.Rebirths,
-		NextPowerCost = GameConfig.GetPowerUpgradeCost(profile.Power),
+		NextPowerCost = Services.GameConfig.GetPowerUpgradeCost(profile.Power),
 		LifetimeEnergy = profile.Stats and profile.Stats.LifetimeEnergy or 0,
 		JungleUnlocked = profile.UnlockedWorlds and profile.UnlockedWorlds.Jungle == true,
-		Companions = CompanionService and CompanionService:GetClientState(profile) or nil,
-		Quests = QuestService and QuestService:GetClientState(profile) or {},
-		Rebirth = RebirthService and RebirthService:GetClientState(profile) or nil,
+		Companions = Services.CompanionService:GetClientState(profile, player),
+		Quests = Services.QuestService:GetClientState(profile),
+		Rebirth = Services.RebirthService:GetClientState(profile),
+		Daily = Services.DailyRewardService:GetClientState(profile),
+		Achievements = Services.AchievementService:GetClientState(profile),
+		Social = Services.SocialService:GetClientState(player),
+		Event = Services.LiveEventService:GetClientState(),
+		Monetization = Services.MonetizationService:GetClientState(profile),
+		Boss = Services.BossService:GetClientState(),
 	}
 end
 
 function NetworkService:Init(services)
-	DataService = services.DataService
-	GameConfig = services.GameConfig
-	CompanionService = services.CompanionService
-	QuestService = services.QuestService
-	RebirthService = services.RebirthService
+	Services = services
 end
 
 function NetworkService:Start()
@@ -54,20 +55,66 @@ function NetworkService:Start()
 	toastEvent.Name = "Toast"
 	toastEvent.Parent = remotes
 
+	actionEvent = remotes:FindFirstChild("Action") or Instance.new("RemoteEvent")
+	actionEvent.Name = "Action"
+	actionEvent.Parent = remotes
+
+	eventBanner = remotes:FindFirstChild("EventBanner") or Instance.new("RemoteEvent")
+	eventBanner.Name = "EventBanner"
+	eventBanner.Parent = remotes
+
 	getState.OnServerInvoke = function(player)
-		return buildState(DataService:GetProfile(player))
+		return buildState(Services.DataService:GetProfile(player), player)
 	end
+
+	actionEvent.OnServerEvent:Connect(function(player, action, payload)
+		if type(action) ~= "string" or not Services.SecurityService:Allow(player, "Action:" .. action, 0.25) then
+			return
+		end
+
+		if action == "ClaimDaily" then
+			Services.DailyRewardService:Claim(player)
+		elseif action == "RedeemCode" then
+			Services.CodeService:Redeem(player, payload)
+		elseif action == "ToggleCompanion" then
+			Services.CompanionService:ToggleEquip(player, payload)
+		elseif action == "PromptPass" then
+			Services.MonetizationService:PromptPass(player, payload)
+		elseif action == "PromptProduct" then
+			Services.MonetizationService:PromptProduct(player, payload)
+		elseif action == "AttackBoss" then
+			Services.BossService:Attack(player)
+		end
+	end)
 end
 
 function NetworkService:PushState(player)
-	if stateChanged then
-		stateChanged:FireClient(player, buildState(DataService:GetProfile(player)))
+	if stateChanged and player and player.Parent == Players then
+		stateChanged:FireClient(player, buildState(Services.DataService:GetProfile(player), player))
+	end
+end
+
+function NetworkService:PushAll()
+	for _, player in ipairs(Players:GetPlayers()) do
+		self:PushState(player)
 	end
 end
 
 function NetworkService:Toast(player, message, tone)
-	if toastEvent and type(message) == "string" then
+	if toastEvent and player and player.Parent == Players and type(message) == "string" then
 		toastEvent:FireClient(player, message, tone or "Info")
+	end
+end
+
+function NetworkService:ToastAll(message, tone)
+	for _, player in ipairs(Players:GetPlayers()) do
+		self:Toast(player, message, tone)
+	end
+end
+
+function NetworkService:BannerAll(title, subtitle, duration)
+	if eventBanner then
+		eventBanner:FireAllClients(title, subtitle or "", duration or 4)
 	end
 end
 
