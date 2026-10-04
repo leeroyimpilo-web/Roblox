@@ -918,7 +918,10 @@ local function render(state)
 		bossLine,
 	}, "\n")
 
-	if state.Raid.Carrying then
+	if state.Tutorial and not state.Tutorial.Complete then
+		objectiveTitle.Text = state.Tutorial.Title
+		objectiveText.Text = state.Tutorial.Text
+	elseif state.Raid.Carrying then
 		objectiveTitle.Text = "ESCAPE WITH THE CORE!"
 		objectiveText.Text = string.format(
 			"Return to your island and use the green BANK pad • Stolen Charge: %s",
