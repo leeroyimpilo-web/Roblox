@@ -1,6 +1,6 @@
 local GameConfig = {}
 
-GameConfig.GameName = "Power Islands"
+GameConfig.GameName = "Power Islands: Steal the Core"
 GameConfig.DataVersion = 1
 GameConfig.AutoSaveSeconds = 60
 
@@ -97,9 +97,10 @@ GameConfig.LiveEvents = {
 	IntervalSeconds = 600,
 	DurationSeconds = 150,
 	Pool = {
-		{ Id = "PowerSurge", Name = "POWER SURGE", EnergyMultiplier = 2 },
-		{ Id = "LuckyRush", Name = "LUCKY RUSH", EnergyMultiplier = 1.5 },
-		{ Id = "MegaCharge", Name = "MEGA CHARGE", EnergyMultiplier = 3 },
+		{ Id = "PowerSurge", Name = "POWER SURGE", EnergyMultiplier = 2, CoreMultiplier = 1 },
+		{ Id = "LuckyRush", Name = "LUCKY RUSH", EnergyMultiplier = 1.5, CoreMultiplier = 1.5 },
+		{ Id = "MegaCharge", Name = "MEGA CHARGE", EnergyMultiplier = 3, CoreMultiplier = 1 },
+		{ Id = "CoreMeltdown", Name = "CORE MELTDOWN", EnergyMultiplier = 1, CoreMultiplier = 4 },
 	},
 }
 
