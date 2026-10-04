@@ -3,8 +3,8 @@ local QuestService = {}
 local DataService
 local EconomyService
 local NetworkService
+local AnalyticsService
 local GameConfig
-
 local questDefinitions = {}
 
 local function getRecord(profile, questId)
@@ -23,6 +23,7 @@ function QuestService:Init(services)
 	DataService = services.DataService
 	EconomyService = services.EconomyService
 	NetworkService = services.NetworkService
+	AnalyticsService = services.AnalyticsService
 	GameConfig = services.GameConfig
 
 	for _, quest in ipairs(GameConfig.Quests) do
@@ -48,8 +49,9 @@ function QuestService:Update(player, questId, amount)
 		record.Completed = true
 		record.Claimed = true
 		if definition.RewardEnergy and definition.RewardEnergy > 0 then
-			EconomyService:AddEnergy(player, definition.RewardEnergy)
+			EconomyService:AddEnergy(player, definition.RewardEnergy, "QuestReward")
 		end
+		AnalyticsService:Custom(player, "QuestCompleted", 1, questId)
 		NetworkService:Toast(player, "Quest complete: " .. definition.Title .. "!", "Success")
 	else
 		NetworkService:PushState(player)
