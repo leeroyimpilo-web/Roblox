@@ -83,4 +83,4 @@ for _, serviceName in ipairs(startOrder) do
 	end
 end
 
-print("[Power Islands] Full systems build started")
+print("[Power Islands: Steal the Core] raid build started")
