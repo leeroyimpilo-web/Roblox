@@ -8,6 +8,49 @@ local Services
 local receiptStore
 local productNameById = {}
 
+local function deepCopy(value)
+	if type(value) ~= "table" then
+		return value
+	end
+	local copy = {}
+	for key, child in pairs(value) do
+		copy[key] = deepCopy(child)
+	end
+	return copy
+end
+
+local function restoreTable(target, snapshot)
+	for key in pairs(target) do
+		target[key] = nil
+	end
+	for key, value in pairs(snapshot) do
+		target[key] = deepCopy(value)
+	end
+end
+
+local function pruneReceipts(receipts)
+	local count = 0
+	for _ in pairs(receipts) do
+		count += 1
+	end
+	while count > 100 do
+		local oldestKey
+		local oldestTime = math.huge
+		for key, timestamp in pairs(receipts) do
+			local t = tonumber(timestamp) or 0
+			if t < oldestTime then
+				oldestTime = t
+				oldestKey = key
+			end
+		end
+		if not oldestKey then
+			break
+		end
+		receipts[oldestKey] = nil
+		count -= 1
+	end
+end
+
 local function configured(id)
 	return type(id) == "number" and id > 0
 end
@@ -200,36 +243,43 @@ function MonetizationService:_processReceipt(receiptInfo)
 	end
 
 	local alreadyGranted = false
-	local checkOk = pcall(function()
+	pcall(function()
 		alreadyGranted = receiptStore:GetAsync(purchaseId) == true
 	end)
-	if checkOk and alreadyGranted then
+	if alreadyGranted then
 		return Enum.ProductPurchaseDecision.PurchaseGranted
 	end
 
 	local player = Players:GetPlayerByUserId(receiptInfo.PlayerId)
-	if not player or not Services.DataService:GetProfile(player) then
+	local profile = player and Services.DataService:GetProfile(player) or nil
+	if not player or not profile then
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 
+	profile.ProcessedReceipts = profile.ProcessedReceipts or {}
+	if profile.ProcessedReceipts[purchaseId] then
+		return Enum.ProductPurchaseDecision.PurchaseGranted
+	end
+
+	local beforeGrant = deepCopy(profile)
 	local granted = self:_grantProduct(player, productName)
 	if not granted then
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 
-	local profile = Services.DataService:GetProfile(player)
 	profile.Stats.Purchases += 1
+	profile.ProcessedReceipts[purchaseId] = os.time()
+	pruneReceipts(profile.ProcessedReceipts)
 
 	if not Services.DataService:Save(player) then
+		restoreTable(profile, beforeGrant)
+		Services.NetworkService:PushState(player)
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 
-	local markOk = pcall(function()
+	pcall(function()
 		receiptStore:SetAsync(purchaseId, true)
 	end)
-	if not markOk then
-		return Enum.ProductPurchaseDecision.NotProcessedYet
-	end
 
 	Services.AnalyticsService:Custom(player, "DeveloperProductPurchased", 1)
 	Services.NetworkService:PushState(player)
