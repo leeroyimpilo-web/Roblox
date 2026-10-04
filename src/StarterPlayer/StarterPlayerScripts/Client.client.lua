@@ -1,6 +1,7 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local SoundService = game:GetService("SoundService")
 local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
@@ -15,6 +16,17 @@ local currentState
 local currentPanel
 local followerParts = {}
 local followerSignature = ""
+local hoverboard
+
+local successSound = Instance.new("Sound")
+successSound.SoundId = "rbxasset://sounds/electronicpingshort.wav"
+successSound.Volume = 0.35
+successSound.Parent = SoundService
+
+local buttonSound = Instance.new("Sound")
+buttonSound.SoundId = "rbxasset://sounds/button.wav"
+buttonSound.Volume = 0.25
+buttonSound.Parent = SoundService
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "PowerIslandsHUD"
@@ -360,6 +372,7 @@ end
 local renderPanel
 
 local function openPanel(name)
+	buttonSound:Play()
 	currentPanel = name
 	modal.Visible = true
 	if renderPanel then
@@ -642,6 +655,10 @@ RunService.RenderStepped:Connect(function()
 		return
 	end
 
+	if hoverboard then
+		hoverboard.CFrame = root.CFrame * CFrame.new(0, -2.7, 0)
+	end
+
 	for index, part in ipairs(followerParts) do
 		local side = (index - (#followerParts + 1) / 2) * 3
 		local bob = math.sin(os.clock() * 3 + index) * 0.35
@@ -650,11 +667,35 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
+local function updateHoverboard(state)
+	local owned = state.Monetization
+		and state.Monetization.Passes
+		and state.Monetization.Passes.Hoverboard
+		and state.Monetization.Passes.Hoverboard.Owned
+
+	if owned and not hoverboard then
+		hoverboard = Instance.new("Part")
+		hoverboard.Name = "LocalHoverboard"
+		hoverboard.Size = Vector3.new(4.8, 0.35, 2.2)
+		hoverboard.Anchored = true
+		hoverboard.CanCollide = false
+		hoverboard.CanTouch = false
+		hoverboard.CanQuery = false
+		hoverboard.Material = Enum.Material.Neon
+		hoverboard.Color = Color3.fromRGB(90, 215, 255)
+		hoverboard.Parent = workspace
+	elseif not owned and hoverboard then
+		hoverboard:Destroy()
+		hoverboard = nil
+	end
+end
+
 local function render(state)
 	if not state then
 		return
 	end
 	currentState = state
+	updateHoverboard(state)
 
 	energyValue.Text = abbreviate(state.Energy)
 	powerValue.Text = "x" .. abbreviate(state.Power)
@@ -722,6 +763,9 @@ local function showToast(message, tone)
 		toast.TextColor3 = Color3.new(1, 1, 1)
 	end
 
+	if tone == "Success" or tone == "Rare" or tone == "Energy" then
+		successSound:Play()
+	end
 	TweenService:Create(toast, TweenInfo.new(0.15), { BackgroundTransparency = 0.08, TextTransparency = 0 }):Play()
 	task.delay(1.4, function()
 		if toastToken == token then
