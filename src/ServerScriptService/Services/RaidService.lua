@@ -325,6 +325,7 @@ function RaidService:TrySteal(thief, victim)
 	end
 
 	self:SetShield(victim, cfg.ShieldAfterTheftSeconds)
+	Services.TutorialService:Mark(thief, "StealCore")
 	Services.AnalyticsService:Custom(thief, "CoreFragmentStolen", amount)
 
 	if record.IsRevenge then
@@ -473,6 +474,7 @@ function RaidService:Deposit(thief)
 	}
 
 	Services.EconomyService:AddEnergy(thief, payout, record.IsRevenge and "RevengeRaid" or "CoreRaid")
+	Services.TutorialService:Mark(thief, "BankCore")
 	Services.LeaderboardService:AddWeeklyScore(thief, 10)
 	Services.LeaderboardService:SyncAllTime(thief)
 	Services.AnalyticsService:Custom(thief, "CoreRaidBanked", payout)
