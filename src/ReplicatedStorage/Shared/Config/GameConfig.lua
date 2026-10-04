@@ -108,6 +108,33 @@ GameConfig.Boss = {
 	BaseRewardEnergy = 5_000,
 }
 
+GameConfig.Raid = {
+	ArenaCenter = Vector3.new(1000, 55, 0),
+	MaxBases = 20,
+	RingRadius = 260,
+	IslandSize = 72,
+	HubSize = 100,
+	Core = {
+		BaseRatePerSecond = 2,
+		RatePerLevel = 1.25,
+		BaseCapacity = 500,
+		CapacityGrowth = 1.45,
+		BaseUpgradeCost = 500,
+		UpgradeCostGrowth = 1.65,
+		MaxLevel = 50,
+	},
+	Steal = {
+		Percent = 0.20,
+		MinimumCharge = 25,
+		MaxAmount = 2_500,
+		BankMultiplier = 1.25,
+		HoldDuration = 1.25,
+		TargetCooldownSeconds = 45,
+		ShieldOnJoinSeconds = 30,
+		ShieldAfterTheftSeconds = 20,
+	},
+}
+
 GameConfig.Monetization = {
 	-- Replace 0 values after creating the items in Creator Hub.
 	Passes = {
@@ -159,8 +186,43 @@ GameConfig.DefaultProfile = {
 		DailyClaims = 0,
 		CodesRedeemed = 0,
 		Purchases = 0,
+			CoreEnergyClaimed = 0,
+			CoreFragmentsStolen = 0,
+			CoreFragmentsLost = 0,
+			RaidDefenses = 0,
 	},
 }
+
+function GameConfig.GetCoreRate(level)
+	level = math.max(1, math.floor(tonumber(level) or 1))
+	return GameConfig.Raid.Core.BaseRatePerSecond + ((level - 1) * GameConfig.Raid.Core.RatePerLevel)
+end
+
+function GameConfig.GetCoreCapacity(level)
+	level = math.max(1, math.floor(tonumber(level) or 1))
+	return math.floor(GameConfig.Raid.Core.BaseCapacity * (GameConfig.Raid.Core.CapacityGrowth ^ (level - 1)))
+end
+
+function GameConfig.GetCoreUpgradeCost(level)
+	level = math.max(1, math.floor(tonumber(level) or 1))
+	return math.floor(GameConfig.Raid.Core.BaseUpgradeCost * (GameConfig.Raid.Core.UpgradeCostGrowth ^ (level - 1)))
+end
+
+function GameConfig.GetCoreName(level)
+	level = math.max(1, math.floor(tonumber(level) or 1))
+	if level >= 50 then
+		return "Galaxy Core"
+	elseif level >= 35 then
+		return "Black Hole Core"
+	elseif level >= 20 then
+		return "Dragon Core"
+	elseif level >= 10 then
+		return "Plasma Core"
+	elseif level >= 5 then
+		return "Reactor Core"
+	end
+	return "Spark Core"
+end
 
 function GameConfig.GetPowerUpgradeCost(power)
 	power = math.max(1, math.floor(tonumber(power) or 1))
