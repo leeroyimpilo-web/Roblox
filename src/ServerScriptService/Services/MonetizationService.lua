@@ -12,6 +12,11 @@ local function configured(id)
 	return type(id) == "number" and id > 0
 end
 
+local function subscriptionConfigured()
+	return type(Services.GameConfig.Monetization.SubscriptionId) == "string"
+		and Services.GameConfig.Monetization.SubscriptionId ~= ""
+end
+
 local function waitForProfile(player)
 	for _ = 1, 40 do
 		if Services.DataService:GetProfile(player) then
@@ -46,6 +51,9 @@ function MonetizationService:GetEnergyMultiplier(player)
 	if profile.Entitlements.VIP then
 		multiplier *= 1.2
 	end
+	if profile.Entitlements.SubscriptionVIP then
+		multiplier *= 1.1
+	end
 	return multiplier
 end
 
@@ -66,8 +74,33 @@ function MonetizationService:GetClientState(profile)
 	return {
 		Passes = passes,
 		Products = products,
-		SubscriptionConfigured = Services.GameConfig.Monetization.SubscriptionId ~= "",
+		SubscriptionConfigured = subscriptionConfigured(),
+		SubscriptionOwned = profile.Entitlements.SubscriptionVIP == true,
 	}
+end
+
+function MonetizationService:RefreshSubscription(player)
+	local profile = waitForProfile(player)
+	if not profile then
+		return
+	end
+
+	if not subscriptionConfigured() then
+		profile.Entitlements.SubscriptionVIP = false
+		return
+	end
+
+	local ok, response = pcall(function()
+		return MarketplaceService:GetUserSubscriptionStatusAsync(
+			player,
+			Services.GameConfig.Monetization.SubscriptionId
+		)
+	end)
+
+	if ok and type(response) == "table" then
+		profile.Entitlements.SubscriptionVIP = response.IsSubscribed == true
+		Services.NetworkService:PushState(player)
+	end
 end
 
 function MonetizationService:RefreshPasses(player)
@@ -87,6 +120,7 @@ function MonetizationService:RefreshPasses(player)
 		end
 	end
 
+	self:RefreshSubscription(player)
 	Services.NetworkService:PushState(player)
 end
 
@@ -115,6 +149,15 @@ function MonetizationService:PromptProduct(player, productName)
 	end
 
 	MarketplaceService:PromptProductPurchase(player, id)
+	return true
+end
+
+function MonetizationService:PromptSubscription(player)
+	if not subscriptionConfigured() then
+		Services.NetworkService:Toast(player, "The VIP subscription ID still needs to be configured.", "Warning")
+		return false
+	end
+	MarketplaceService:PromptSubscriptionPurchase(player, Services.GameConfig.Monetization.SubscriptionId)
 	return true
 end
 
@@ -177,7 +220,7 @@ function MonetizationService:_processReceipt(receiptInfo)
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 
-	Services.AnalyticsService:Custom(player, "DeveloperProductPurchased", 1, productName)
+	Services.AnalyticsService:Custom(player, "DeveloperProductPurchased", 1)
 	Services.NetworkService:PushState(player)
 	return Enum.ProductPurchaseDecision.PurchaseGranted
 end
@@ -201,11 +244,19 @@ function MonetizationService:Start()
 			if id == gamePassId then
 				profile.Entitlements[name] = true
 				profile.Stats.Purchases += 1
-				Services.AnalyticsService:Custom(player, "GamePassPurchased", 1, name)
+				Services.AnalyticsService:Custom(player, "GamePassPurchased", 1)
 				Services.NetworkService:PushState(player)
 				Services.NetworkService:Toast(player, name .. " unlocked!", "Rare")
 				break
 			end
+		end
+	end)
+
+	Players.UserSubscriptionStatusChanged:Connect(function(player, subscriptionId)
+		if subscriptionId == Services.GameConfig.Monetization.SubscriptionId then
+			task.spawn(function()
+				self:RefreshSubscription(player)
+			end)
 		end
 	end)
 
