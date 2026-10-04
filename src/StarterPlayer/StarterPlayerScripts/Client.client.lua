@@ -432,6 +432,11 @@ renderPanel = function(name)
 				),
 				Color3.fromRGB(255, 122, 122)
 			)
+			if defense.TrapUpgradeCost > 0 then
+				addButton("UPGRADE PULSE TRAP • " .. abbreviate(defense.TrapUpgradeCost) .. " ENERGY", function()
+					actionEvent:FireServer("UpgradeTrap")
+				end, Color3.fromRGB(118, 48, 61))
+			end
 		end
 		if raid.IsWanted then
 			addText(
