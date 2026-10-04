@@ -26,12 +26,17 @@ function LiveEventService:GetEnergyMultiplier()
 	return currentEvent and currentEvent.EnergyMultiplier or 1
 end
 
+function LiveEventService:GetCoreMultiplier()
+	return currentEvent and currentEvent.CoreMultiplier or 1
+end
+
 function LiveEventService:GetClientState()
 	if not currentEvent then
 		return {
 			Active = false,
 			Name = "No live event",
 			EnergyMultiplier = 1,
+			CoreMultiplier = 1,
 			EndsAt = 0,
 		}
 	end
@@ -41,6 +46,7 @@ function LiveEventService:GetClientState()
 		Id = currentEvent.Id,
 		Name = currentEvent.Name,
 		EnergyMultiplier = currentEvent.EnergyMultiplier,
+		CoreMultiplier = currentEvent.CoreMultiplier,
 		EndsAt = currentEvent.EndsAt,
 	}
 end
@@ -58,11 +64,20 @@ function LiveEventService:Activate(eventId, duration)
 	currentEvent = {
 		Id = definition.Id,
 		Name = definition.Name,
-		EnergyMultiplier = definition.EnergyMultiplier,
+		EnergyMultiplier = definition.EnergyMultiplier or 1,
+		CoreMultiplier = definition.CoreMultiplier or 1,
 		EndsAt = os.time() + duration,
 	}
 
-	NetworkService:BannerAll(definition.Name, string.format("Energy rewards x%.1f!", definition.EnergyMultiplier), 5)
+	local subtitle
+	if (definition.CoreMultiplier or 1) > 1 and (definition.EnergyMultiplier or 1) <= 1 then
+		subtitle = string.format("All Power Cores generate x%.1f faster!", definition.CoreMultiplier)
+	elseif (definition.CoreMultiplier or 1) > 1 then
+		subtitle = string.format("Energy x%.1f • Core generation x%.1f!", definition.EnergyMultiplier, definition.CoreMultiplier)
+	else
+		subtitle = string.format("Energy rewards x%.1f!", definition.EnergyMultiplier)
+	end
+	NetworkService:BannerAll(definition.Name, subtitle, 5)
 	NetworkService:PushAll()
 
 	task.delay(duration, function()
