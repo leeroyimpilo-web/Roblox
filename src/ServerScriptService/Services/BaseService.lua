@@ -142,16 +142,31 @@ function BaseService:UpdateCoreVisual(owner)
 	end
 
 	local level = profile.CoreLevel
+	local color
 	if level >= 35 then
-		assignment.Core.Color = Color3.fromRGB(118, 69, 255)
+		color = Color3.fromRGB(118, 69, 255)
 	elseif level >= 20 then
-		assignment.Core.Color = Color3.fromRGB(255, 72, 95)
+		color = Color3.fromRGB(255, 72, 95)
 	elseif level >= 10 then
-		assignment.Core.Color = Color3.fromRGB(255, 72, 223)
+		color = Color3.fromRGB(255, 72, 223)
 	elseif level >= 5 then
-		assignment.Core.Color = Color3.fromRGB(255, 174, 54)
+		color = Color3.fromRGB(255, 174, 54)
 	else
-		assignment.Core.Color = Color3.fromRGB(62, 224, 255)
+		color = Color3.fromRGB(62, 224, 255)
+	end
+
+	local selectedSkin = profile.CoreSkin or "Default"
+	if selectedSkin ~= "Default" and profile.UnlockedCoreSkins and profile.UnlockedCoreSkins[selectedSkin] then
+		color = Services.GameConfig.GetCoreSkin(selectedSkin).Color
+	end
+
+	assignment.Core.Color = color
+	local light = assignment.Core:FindFirstChildOfClass("PointLight")
+	if light then
+		light.Color = color
+	end
+	if label then
+		label.TextColor3 = color
 	end
 end
 
@@ -194,6 +209,7 @@ function BaseService:UpgradeCore(player)
 	end
 
 	profile.CoreLevel += 1
+	Services.SkinService:RefreshUnlocks(player)
 	Services.AchievementService:Evaluate(player)
 	Services.AnalyticsService:Custom(player, "CoreUpgraded", profile.CoreLevel)
 	self:UpdateCoreVisual(player)
