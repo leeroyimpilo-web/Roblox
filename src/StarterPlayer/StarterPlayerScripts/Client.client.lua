@@ -141,7 +141,7 @@ local petsValue = statCard("PETS", "*", Color3.fromRGB(126, 255, 164))
 
 local status = Instance.new("Frame")
 status.Position = UDim2.fromOffset(18, 110)
-status.Size = UDim2.fromOffset(270, 208)
+status.Size = UDim2.fromOffset(290, 258)
 status.BackgroundColor3 = Color3.fromRGB(20, 26, 42)
 status.BackgroundTransparency = 0.07
 status.Parent = gui
@@ -403,6 +403,10 @@ renderPanel = function(name)
 		modalTitle.Text = "POWER CORE"
 		local core = currentState.Core
 		local raid = currentState.Raid
+		if not core then
+			addText("Your personal Core island is loading...")
+			return
+		end
 		addText(string.format("%s • Level %s", core.Name, core.Level), Color3.fromRGB(255, 112, 203))
 		addText(string.format("Charge: %s / %s", abbreviate(core.Charge), abbreviate(core.Capacity)), Color3.fromRGB(95, 224, 255))
 		addText(string.format("Generation: +%.2f Charge/sec", core.RatePerSecond))
@@ -411,7 +415,7 @@ renderPanel = function(name)
 		else
 			addText("Your Core is fully evolved.", Color3.fromRGB(126, 255, 164))
 		end
-		addText("Raid score: " .. abbreviate(currentState.CoreRaidScore or 0))
+		addText("Raid score: " .. abbreviate(core.RaidScore or 0))
 		if raid.Carrying then
 			addText(
 				string.format("CARRYING STOLEN CORE: %s Charge from %s", abbreviate(raid.Amount), raid.VictimName or "another player"),
