@@ -175,7 +175,7 @@ statusText.Parent = status
 local menu = Instance.new("Frame")
 menu.AnchorPoint = Vector2.new(1, 0.5)
 menu.Position = UDim2.new(1, -18, 0.52, 0)
-menu.Size = UDim2.fromOffset(150, 390)
+menu.Size = UDim2.fromOffset(150, 455)
 menu.BackgroundTransparency = 1
 menu.Parent = gui
 
@@ -385,11 +385,13 @@ closeButton.Activated:Connect(function()
 	currentPanel = nil
 end)
 
+addMenuButton("Core", "CORE"):Activated:Connect(function() openPanel("Core") end)
 addMenuButton("Pets", "PETS"):Activated:Connect(function() openPanel("Pets") end)
 addMenuButton("Daily", "DAILY"):Activated:Connect(function() openPanel("Daily") end)
 addMenuButton("Shop", "SHOP"):Activated:Connect(function() openPanel("Shop") end)
 addMenuButton("Codes", "CODES"):Activated:Connect(function() openPanel("Codes") end)
-addMenuButton("Achievements", "AWARDS"):Activated:Connect(function() openPanel("Achievements") end)\naddMenuButton("Social", "SOCIAL"):Activated:Connect(function() openPanel("Social") end)
+addMenuButton("Achievements", "AWARDS"):Activated:Connect(function() openPanel("Achievements") end)
+addMenuButton("Social", "SOCIAL"):Activated:Connect(function() openPanel("Social") end)
 
 renderPanel = function(name)
 	if not currentState then
@@ -397,7 +399,35 @@ renderPanel = function(name)
 	end
 	clearBody()
 
-	if name == "Pets" then
+	if name == "Core" then
+		modalTitle.Text = "POWER CORE"
+		local core = currentState.Core
+		local raid = currentState.Raid
+		addText(string.format("%s • Level %s", core.Name, core.Level), Color3.fromRGB(255, 112, 203))
+		addText(string.format("Charge: %s / %s", abbreviate(core.Charge), abbreviate(core.Capacity)), Color3.fromRGB(95, 224, 255))
+		addText(string.format("Generation: +%.2f Charge/sec", core.RatePerSecond))
+		if core.UpgradeCost > 0 then
+			addText("Next evolution: " .. abbreviate(core.UpgradeCost) .. " Energy", Color3.fromRGB(255, 213, 111))
+		else
+			addText("Your Core is fully evolved.", Color3.fromRGB(126, 255, 164))
+		end
+		addText("Raid score: " .. abbreviate(currentState.CoreRaidScore or 0))
+		if raid.Carrying then
+			addText(
+				string.format("CARRYING STOLEN CORE: %s Charge from %s", abbreviate(raid.Amount), raid.VictimName or "another player"),
+				Color3.fromRGB(255, 112, 203)
+			)
+		else
+			addText("Cross the bridges, steal another player's Core fragment, then escape back to your green BANK pad.")
+		end
+		if raid.Shielded then
+			local remaining = math.max(0, raid.ShieldEndsAt - os.time())
+			addText(string.format("Core shield active: %ss", remaining), Color3.fromRGB(111, 194, 255))
+		end
+		addButton("RETURN TO MY ISLAND", function()
+			actionEvent:FireServer("GoHome")
+		end, Color3.fromRGB(83, 55, 116))
+	elseif name == "Pets" then
 		modalTitle.Text = "COMPANIONS"
 		local pets = currentState.Companions
 		addText(string.format("Equipped %s/%s • Total boost x%.2f", pets.EquippedCount, pets.MaxEquipped, pets.Multiplier), Color3.fromRGB(126, 255, 164))
@@ -708,12 +738,24 @@ local function render(state)
 	local bossLine = state.Boss.Alive
 		and string.format("%s: %s/%s HP", state.Boss.Name, state.Boss.Health, state.Boss.MaxHealth)
 		or "Jungle Titan respawning"
+	local coreLine = state.Core and string.format(
+		"%s L%s • %s/%s Charge",
+		state.Core.Name,
+		state.Core.Level,
+		abbreviate(state.Core.Charge),
+		abbreviate(state.Core.Capacity)
+	) or "Core loading..."
+	local raidLine = state.Raid.Carrying
+		and string.format("ESCAPE: %s stolen Charge", abbreviate(state.Raid.Amount))
+		or (state.Raid.Shielded and "Core shield ACTIVE" or "Core vulnerable to raids")
 	local worldLine = string.format("Worlds: %s/%s", state.Worlds.UnlockedCount, state.Worlds.Total)
 	local socialLine = string.format("Friends: %s • x%.2f bonus", state.Social.FriendsInServer, state.Social.Multiplier)
 	local partyLine = string.format("Party boost x%.2f", state.Party.Multiplier)
 	local boostLine = string.format("Pet boost x%.2f • Crystal x%.2f", state.Companions.Multiplier, state.Rebirth.CrystalMultiplier)
 
 	statusText.Text = table.concat({
+		coreLine,
+		raidLine,
 		worldLine,
 		socialLine,
 		partyLine,
@@ -722,7 +764,21 @@ local function render(state)
 		bossLine,
 	}, "\n")
 
-	if state.Worlds.NextId then
+	if state.Raid.Carrying then
+		objectiveTitle.Text = "ESCAPE WITH THE CORE!"
+		objectiveText.Text = string.format(
+			"Return to your island and use the green BANK pad • Stolen Charge: %s",
+			abbreviate(state.Raid.Amount)
+		)
+	elseif state.Core and state.Core.AvailableCharge >= 25 then
+		objectiveTitle.Text = "YOUR CORE IS CHARGED"
+		objectiveText.Text = string.format(
+			"Claim %s Charge at your Core, evolve it for %s Energy, or raid another island.",
+			abbreviate(state.Core.AvailableCharge),
+			state.Core.UpgradeCost > 0 and abbreviate(state.Core.UpgradeCost) or "MAX"
+		)
+	elseif state.Worlds.NextId then
+		objectiveTitle.Text = "NEXT GOAL"
 		objectiveText.Text = string.format(
 			"Next world: %s for %s Energy • Power upgrade: %s Energy",
 			state.Worlds.NextName,
@@ -730,6 +786,7 @@ local function render(state)
 			abbreviate(state.NextPowerCost)
 		)
 	else
+		objectiveTitle.Text = "NEXT GOAL"
 		objectiveText.Text = string.format(
 			"All worlds unlocked • Rebirth needs %s Energy + Power %s • Reward %s Crystals",
 			abbreviate(state.Rebirth.RequiredEnergy),
