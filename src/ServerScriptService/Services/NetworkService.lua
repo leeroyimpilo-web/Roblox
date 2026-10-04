@@ -71,6 +71,10 @@ local function buildState(profile, player)
 		Trade = Services.TradeService:GetClientState(player),
 		Core = Services.BaseService:GetClientState(player),
 		Raid = Services.RaidService:GetClientState(player),
+		Defense = Services.DefenseService:GetClientState(player),
+		Skins = Services.SkinService:GetClientState(player),
+		Leaderboards = Services.LeaderboardService:GetClientState(player),
+		MegaCore = Services.MegaCoreService:GetClientState(),
 		ServerPlayers = getServerPlayers(player),
 		Event = Services.LiveEventService:GetClientState(),
 		Monetization = Services.MonetizationService:GetClientState(profile),
@@ -150,6 +154,8 @@ function NetworkService:Start()
 			Services.TradeService:Cancel(player)
 		elseif action == "GoHome" then
 			Services.BaseService:TeleportHome(player)
+		elseif action == "SetCoreSkin" then
+			Services.SkinService:SetSkin(player, payload)
 		end
 	end)
 end
