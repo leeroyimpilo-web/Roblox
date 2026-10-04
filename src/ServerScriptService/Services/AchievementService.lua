@@ -21,6 +21,10 @@ local function qualifies(profile, id)
 		return profile.Rebirths >= 1
 	elseif id == "boss_1" then
 		return profile.Stats.BossKills >= 1
+	elseif id == "raid_1" then
+		return profile.Stats.CoreFragmentsStolen >= 1
+	elseif id == "core_5" then
+		return profile.CoreLevel >= 5
 	end
 	return false
 end
