@@ -591,7 +591,8 @@ function BaseService:Start()
 				if profile then
 					local capacity = Services.GameConfig.GetCoreCapacity(profile.CoreLevel)
 					local rate = Services.GameConfig.GetCoreRate(profile.CoreLevel)
-					profile.CoreCharge = math.min(capacity, profile.CoreCharge + rate)
+					local eventMultiplier = Services.LiveEventService:GetCoreMultiplier()
+					profile.CoreCharge = math.min(capacity, profile.CoreCharge + (rate * eventMultiplier))
 					self:UpdateCoreVisual(player)
 					if tickCount % 5 == 0 then
 						Services.NetworkService:PushState(player)
