@@ -2,50 +2,38 @@
 
 ## Recommended title
 
-**Power Islands ⚡ Pets, Worlds & Rebirths**
+**Power Islands: Steal the Core ⚡**
 
 ## Short description
 
-Collect Energy, hatch powerful companions, unlock six worlds, defeat bosses, play with friends and rebirth for permanent power.
+Build your Power Core, raid other floating islands, steal glowing fragments, escape the chase, hatch pets and evolve into a Galaxy Core.
 
 ## Full description
 
-Welcome to **POWER ISLANDS**!
+Welcome to **POWER ISLANDS: STEAL THE CORE**.
 
-Start on a tiny island and build your power into something legendary.
+Your island has one thing everybody wants: your **Power Core**.
 
-⚡ Collect Energy  
-⭐ Upgrade your Power  
-🐾 Hatch companions from Common to Mythic  
-🌍 Unlock six worlds  
-👹 Fight the Jungle Titan  
-💎 Rebirth for permanent Power Crystals  
-🎁 Claim daily rewards  
-🏆 Complete quests and achievements  
-👥 Party with friends for bonus Energy  
-🔄 Trade companions with other players  
-🎉 Join surprise live events
+⚡ Let your Core generate Charge  
+💰 Claim it safely for Energy  
+🧬 Evolve from Spark Core to Galaxy Core  
+🏃 Raid another player's island  
+💎 Steal a glowing Core fragment  
+🚨 Escape while the owner chases you  
+🛡️ Catch thieves and recover your Core  
+🐾 Hatch companions for bigger boosts  
+🌍 Explore six adventure worlds  
+👹 Defeat the Jungle Titan  
+👥 Party and trade with friends  
+🔥 Survive CORE MELTDOWN events
 
 **Launch codes:** LAUNCH, JUNGLE, POWERUP
 
-New updates can add more worlds, bosses, companions and events.
+## Thumbnail concepts
 
-## Thumbnail text ideas
+1. **STEAL HIS CORE!** — thief carrying a huge pink fragment while owner chases.
+2. **MY CORE IS WORTH HOW MUCH?!** — giant evolved Galaxy Core on a rich island.
+3. **ESCAPE BEFORE HE CATCHES YOU** — bridge chase with bank pad visible ahead.
+4. **CORE MELTDOWN!** — every island glowing during the timed event.
 
-1. **HATCH MYTHIC PETS**
-2. **UNLOCK 6 WORLDS**
-3. **DEFEAT THE JUNGLE TITAN**
-4. **REBIRTH = PERMANENT POWER**
-5. **PLAY WITH FRIENDS FOR BONUS ENERGY**
-
-Keep thumbnail text large and minimal. Show one clear gameplay promise per image.
-
-## Update-note template
-
-**UPDATE [number]**
-- New world:
-- New companions:
-- New boss/event:
-- New code:
-- Balance improvements:
-- Bug fixes:
+Keep each thumbnail focused on one clear action. The stolen fragment should be oversized and immediately readable on a phone screen.
