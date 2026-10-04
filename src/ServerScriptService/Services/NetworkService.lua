@@ -63,6 +63,7 @@ local function buildState(profile, player)
 		Worlds = getWorldState(profile),
 		Companions = Services.CompanionService:GetClientState(profile, player),
 		Quests = Services.QuestService:GetClientState(profile),
+		Tutorial = Services.TutorialService:GetClientState(profile),
 		Rebirth = Services.RebirthService:GetClientState(profile),
 		Daily = Services.DailyRewardService:GetClientState(profile),
 		Achievements = Services.AchievementService:GetClientState(profile),
