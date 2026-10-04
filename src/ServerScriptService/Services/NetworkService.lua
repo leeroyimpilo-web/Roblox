@@ -30,6 +30,23 @@ local function getWorldState(profile)
 	}
 end
 
+local function getServerPlayers(player)
+	local result = {}
+	for _, other in ipairs(Players:GetPlayers()) do
+		if other ~= player then
+			table.insert(result, {
+				UserId = other.UserId,
+				Name = other.Name,
+				DisplayName = other.DisplayName,
+			})
+		end
+	end
+	table.sort(result, function(a, b)
+		return a.Name < b.Name
+	end)
+	return result
+end
+
 local function buildState(profile, player)
 	if not profile then
 		return nil
@@ -50,6 +67,9 @@ local function buildState(profile, player)
 		Daily = Services.DailyRewardService:GetClientState(profile),
 		Achievements = Services.AchievementService:GetClientState(profile),
 		Social = Services.SocialService:GetClientState(player),
+		Party = Services.PartyService:GetClientState(player),
+		Trade = Services.TradeService:GetClientState(player),
+		ServerPlayers = getServerPlayers(player),
 		Event = Services.LiveEventService:GetClientState(),
 		Monetization = Services.MonetizationService:GetClientState(profile),
 		Boss = Services.BossService:GetClientState(),
@@ -104,8 +124,28 @@ function NetworkService:Start()
 			Services.MonetizationService:PromptPass(player, payload)
 		elseif action == "PromptProduct" then
 			Services.MonetizationService:PromptProduct(player, payload)
+		elseif action == "PromptSubscription" then
+			Services.MonetizationService:PromptSubscription(player)
 		elseif action == "AttackBoss" then
 			Services.BossService:Attack(player)
+		elseif action == "PartyInvite" then
+			Services.PartyService:Invite(player, payload)
+		elseif action == "PartyAccept" then
+			Services.PartyService:Accept(player)
+		elseif action == "PartyLeave" then
+			Services.PartyService:Leave(player)
+		elseif action == "GiftEnergy" and type(payload) == "table" then
+			Services.PartyService:GiftEnergy(player, payload.UserId, payload.Amount)
+		elseif action == "TradeRequest" then
+			Services.TradeService:Request(player, payload)
+		elseif action == "TradeAccept" then
+			Services.TradeService:Accept(player)
+		elseif action == "TradeOffer" then
+			Services.TradeService:Offer(player, payload)
+		elseif action == "TradeConfirm" then
+			Services.TradeService:Confirm(player)
+		elseif action == "TradeCancel" then
+			Services.TradeService:Cancel(player)
 		end
 	end)
 end
