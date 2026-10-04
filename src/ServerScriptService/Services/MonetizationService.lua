@@ -103,6 +103,16 @@ function MonetizationService:RefreshSubscription(player)
 	end
 end
 
+function MonetizationService:_applyCharacterBenefits(player)
+	local profile = Services.DataService:GetProfile(player)
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not profile or not humanoid then
+		return
+	end
+	humanoid.WalkSpeed = profile.Entitlements.Hoverboard and 24 or 16
+end
+
 function MonetizationService:RefreshPasses(player)
 	local profile = waitForProfile(player)
 	if not profile then
@@ -121,6 +131,7 @@ function MonetizationService:RefreshPasses(player)
 	end
 
 	self:RefreshSubscription(player)
+	self:_applyCharacterBenefits(player)
 	Services.NetworkService:PushState(player)
 end
 
@@ -245,6 +256,7 @@ function MonetizationService:Start()
 				profile.Entitlements[name] = true
 				profile.Stats.Purchases += 1
 				Services.AnalyticsService:Custom(player, "GamePassPurchased", 1)
+				self:_applyCharacterBenefits(player)
 				Services.NetworkService:PushState(player)
 				Services.NetworkService:Toast(player, name .. " unlocked!", "Rare")
 				break
@@ -261,6 +273,11 @@ function MonetizationService:Start()
 	end)
 
 	Players.PlayerAdded:Connect(function(player)
+		player.CharacterAdded:Connect(function()
+			task.delay(1, function()
+				self:_applyCharacterBenefits(player)
+			end)
+		end)
 		task.spawn(function()
 			self:RefreshPasses(player)
 		end)
