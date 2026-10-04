@@ -7,6 +7,8 @@ local carried = {}
 local reservedByVictim = {}
 local shieldUntil = {}
 local raidCooldowns = {}
+local wanted = {}
+local revengeTargets = {}
 
 local function formatNumber(value)
 	value = tonumber(value) or 0
@@ -36,6 +38,106 @@ end
 
 function RaidService:IsShielded(player)
 	return (shieldUntil[player.UserId] or 0) > os.time()
+end
+
+function RaidService:_getWanted(player)
+	wanted[player.UserId] = wanted[player.UserId] or {
+		Streak = 0,
+		Bounty = 0,
+	}
+	return wanted[player.UserId]
+end
+
+function RaidService:_getRevenge(player)
+	local record = revengeTargets[player.UserId]
+	if record and record.EndsAt <= os.time() then
+		revengeTargets[player.UserId] = nil
+		return nil
+	end
+	return record
+end
+
+function RaidService:_clearWantedVisual(player)
+	local character = player.Character
+	if not character then
+		return
+	end
+	local oldHighlight = character:FindFirstChild("WantedHighlight")
+	if oldHighlight then
+		oldHighlight:Destroy()
+	end
+	local root = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Head")
+	if root then
+		local oldGui = root:FindFirstChild("WantedBillboard")
+		if oldGui then
+			oldGui:Destroy()
+		end
+	end
+end
+
+function RaidService:_updateWantedVisual(player)
+	self:_clearWantedVisual(player)
+
+	local state = self:_getWanted(player)
+	if state.Streak < Services.GameConfig.Raid.Wanted.StartsAtStreak then
+		return
+	end
+
+	local character = player.Character
+	local root = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Head"))
+	if not character or not root then
+		return
+	end
+
+	local highlight = Instance.new("Highlight")
+	highlight.Name = "WantedHighlight"
+	highlight.FillColor = Color3.fromRGB(255, 56, 76)
+	highlight.OutlineColor = Color3.fromRGB(255, 225, 93)
+	highlight.FillTransparency = 0.72
+	highlight.OutlineTransparency = 0.05
+	highlight.Parent = character
+
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "WantedBillboard"
+	gui.Size = UDim2.fromOffset(280, 72)
+	gui.StudsOffset = Vector3.new(0, 4.5, 0)
+	gui.AlwaysOnTop = true
+	gui.Parent = root
+
+	local label = Instance.new("TextLabel")
+	label.Size = UDim2.fromScale(1, 1)
+	label.BackgroundColor3 = Color3.fromRGB(86, 17, 28)
+	label.BackgroundTransparency = 0.08
+	label.Text = string.format("WANTED x%s\nBOUNTY %s ENERGY", state.Streak, formatNumber(state.Bounty))
+	label.TextScaled = true
+	label.TextWrapped = true
+	label.Font = Enum.Font.GothamBlack
+	label.TextColor3 = Color3.fromRGB(255, 224, 105)
+	label.Parent = gui
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = label
+end
+
+function RaidService:_recordSuccessfulHeist(thief)
+	local state = self:_getWanted(thief)
+	state.Streak += 1
+	state.Bounty = math.min(
+		Services.GameConfig.Raid.Wanted.MaxBounty,
+		state.Streak * Services.GameConfig.Raid.Wanted.BountyPerStreak
+	)
+	self:_updateWantedVisual(thief)
+	return state
+end
+
+function RaidService:_resetWanted(player)
+	wanted[player.UserId] = {
+		Streak = 0,
+		Bounty = 0,
+	}
+	self:_updateWantedVisual(player)
+	Services.NetworkService:PushState(player)
 end
 
 function RaidService:SetShield(player, seconds)
@@ -191,11 +293,15 @@ function RaidService:TrySteal(thief, victim)
 	reservedByVictim[victim.UserId] = self:GetReservedForVictim(victim.UserId) + amount
 	raidCooldowns[key] = os.time() + cfg.TargetCooldownSeconds
 
+	local revenge = self:_getRevenge(thief)
+	local isRevenge = revenge and revenge.TargetUserId == victim.UserId
+
 	local record = {
 		VictimUserId = victim.UserId,
 		VictimName = victim.Name,
 		Amount = amount,
 		StartedAt = os.time(),
+		IsRevenge = isRevenge == true,
 	}
 	carried[thief] = record
 
@@ -207,9 +313,19 @@ function RaidService:TrySteal(thief, victim)
 
 	self:SetShield(victim, cfg.ShieldAfterTheftSeconds)
 	Services.AnalyticsService:Custom(thief, "CoreFragmentStolen", amount)
-	Services.NetworkService:Toast(thief, "ESCAPE! Get back to your island and bank the stolen Core!", "Rare")
+
+	if record.IsRevenge then
+		Services.NetworkService:Toast(
+			thief,
+			"REVENGE RAID! Escape successfully for a x" .. Services.GameConfig.Raid.Revenge.PayoutMultiplier .. " payout.",
+			"Rare"
+		)
+	else
+		Services.NetworkService:Toast(thief, "ESCAPE! Get back to your island and bank the stolen Core!", "Rare")
+	end
+
 	Services.NetworkService:BannerAll(
-		"CORE THEFT!",
+		record.IsRevenge and "REVENGE THEFT!" or "CORE THEFT!",
 		thief.DisplayName .. " stole a fragment from " .. victim.DisplayName .. "!",
 		4
 	)
@@ -264,11 +380,25 @@ function RaidService:Recover(defender, thief)
 		profile.Stats.RaidDefenses += 1
 	end
 
+	local wantedState = self:_getWanted(thief)
+	local bounty = 0
+	if wantedState.Streak >= Services.GameConfig.Raid.Wanted.StartsAtStreak then
+		bounty = wantedState.Bounty
+	end
+
 	self:CancelCarry(thief, "recovered")
+
+	if bounty > 0 and profile then
+		profile.Stats.BountiesClaimed += 1
+		Services.EconomyService:AddEnergy(defender, bounty, "WantedBounty")
+		Services.NetworkService:Toast(defender, "BOUNTY CLAIMED! +" .. formatNumber(bounty) .. " Energy", "Rare")
+		self:_resetWanted(thief)
+	end
+
 	Services.AnalyticsService:Custom(defender, "CoreRaidDefended", record.Amount)
 	Services.NetworkService:BannerAll(
-		"CORE RECOVERED!",
-		defender.DisplayName .. " caught " .. thief.DisplayName .. " before they escaped!",
+		bounty > 0 and "BOUNTY CLAIMED!" or "CORE RECOVERED!",
+		defender.DisplayName .. " caught " .. thief.DisplayName .. (bounty > 0 and (" for " .. formatNumber(bounty) .. " Energy!") or "!"),
 		4
 	)
 	return true
@@ -303,26 +433,55 @@ function RaidService:Deposit(thief)
 	victimProfile.Stats.CoreFragmentsLost += 1
 	thiefProfile.Stats.CoreFragmentsStolen += 1
 	thiefProfile.CoreRaidScore += amount
+
 	Services.QuestService:Update(thief, "raid_1", 1)
+	Services.SkinService:RefreshUnlocks(thief)
 	Services.AchievementService:Evaluate(thief)
 
-	local payout = math.max(1, math.floor(amount * Services.GameConfig.Raid.Steal.BankMultiplier))
+	local payoutMultiplier = Services.GameConfig.Raid.Steal.BankMultiplier
+	if record.IsRevenge then
+		payoutMultiplier *= Services.GameConfig.Raid.Revenge.PayoutMultiplier
+		thiefProfile.Stats.RevengeHeists += 1
+		revengeTargets[thief.UserId] = nil
+	end
+	local payout = math.max(1, math.floor(amount * payoutMultiplier))
 
 	carried[thief] = nil
 	self:_releaseReservation(record)
 	self:_removeFragment(record)
 	self:_restoreMovement(thief, record)
 
-	Services.EconomyService:AddEnergy(thief, payout, "CoreRaid")
+	local wantedState = self:_recordSuccessfulHeist(thief)
+
+	revengeTargets[victim.UserId] = {
+		TargetUserId = thief.UserId,
+		TargetName = thief.DisplayName,
+		EndsAt = os.time() + Services.GameConfig.Raid.Revenge.WindowSeconds,
+	}
+
+	Services.EconomyService:AddEnergy(thief, payout, record.IsRevenge and "RevengeRaid" or "CoreRaid")
+	Services.LeaderboardService:AddWeeklyScore(thief, 10)
+	Services.LeaderboardService:SyncAllTime(thief)
 	Services.AnalyticsService:Custom(thief, "CoreRaidBanked", payout)
 	Services.BaseService:UpdateCoreVisual(victim)
 	Services.NetworkService:PushState(victim)
 	Services.NetworkService:PushState(thief)
-	Services.NetworkService:Toast(thief, "+" .. formatNumber(payout) .. " Energy banked from the stolen Core!", "Rare")
-	Services.NetworkService:Toast(victim, thief.DisplayName .. " escaped with part of your Core Charge.", "Warning")
+
+	local bonusText = record.IsRevenge and " • REVENGE BONUS" or ""
+	Services.NetworkService:Toast(thief, "+" .. formatNumber(payout) .. " Energy banked!" .. bonusText, "Rare")
+	Services.NetworkService:Toast(
+		victim,
+		thief.DisplayName .. " escaped with part of your Core. REVENGE TARGET active for 15 minutes!",
+		"Warning"
+	)
+
+	local wantedText = wantedState.Streak >= Services.GameConfig.Raid.Wanted.StartsAtStreak
+		and (" • WANTED x" .. wantedState.Streak .. " • " .. formatNumber(wantedState.Bounty) .. " bounty")
+		or ""
+
 	Services.NetworkService:BannerAll(
-		"HEIST COMPLETE!",
-		thief.DisplayName .. " escaped with " .. formatNumber(amount) .. " Core Charge!",
+		record.IsRevenge and "REVENGE COMPLETE!" or "HEIST COMPLETE!",
+		thief.DisplayName .. " escaped with " .. formatNumber(amount) .. " Core Charge!" .. wantedText,
 		5
 	)
 	return true
@@ -330,16 +489,49 @@ end
 
 function RaidService:GetClientState(player)
 	local record = carried[player]
+	local wantedState = self:_getWanted(player)
+	local revenge = self:_getRevenge(player)
 	return {
 		Carrying = record ~= nil,
 		Amount = record and record.Amount or 0,
 		VictimName = record and record.VictimName or nil,
+		IsRevengeCarry = record and record.IsRevenge or false,
 		ShieldEndsAt = shieldUntil[player.UserId] or 0,
 		Shielded = self:IsShielded(player),
+		WantedStreak = wantedState.Streak,
+		Bounty = wantedState.Bounty,
+		IsWanted = wantedState.Streak >= Services.GameConfig.Raid.Wanted.StartsAtStreak,
+		Revenge = revenge and {
+			TargetUserId = revenge.TargetUserId,
+			TargetName = revenge.TargetName,
+			EndsAt = revenge.EndsAt,
+			PayoutMultiplier = Services.GameConfig.Raid.Revenge.PayoutMultiplier,
+		} or nil,
 	}
 end
 
 function RaidService:Start()
+	local function attachCharacter(player)
+		player.CharacterAdded:Connect(function()
+			task.delay(1, function()
+				if player.Parent == Players then
+					self:_updateWantedVisual(player)
+				end
+			end)
+		end)
+	end
+
+	Players.PlayerAdded:Connect(function(player)
+		attachCharacter(player)
+	end)
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		attachCharacter(player)
+		task.delay(1, function()
+			self:_updateWantedVisual(player)
+		end)
+	end
+
 	Players.PlayerRemoving:Connect(function(player)
 		if carried[player] then
 			self:CancelCarry(player, "left")
@@ -359,7 +551,14 @@ function RaidService:Start()
 			end
 		end
 
+		for userId, revenge in pairs(revengeTargets) do
+			if revenge.TargetUserId == victimId or userId == victimId then
+				revengeTargets[userId] = nil
+			end
+		end
+
 		shieldUntil[victimId] = nil
+		wanted[victimId] = nil
 	end)
 end
 
