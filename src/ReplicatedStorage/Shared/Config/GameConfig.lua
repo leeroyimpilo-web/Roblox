@@ -212,6 +212,7 @@ GameConfig.DefaultProfile = {
 	Entitlements = {},
 	DailyStreak = 0,
 	LastDailyClaim = 0,
+	LastSeen = 0,
 	PlaytimeSeconds = 0,
 	CoreLevel = 1,
 	CoreCharge = 75,
